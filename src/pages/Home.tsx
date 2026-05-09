@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { motion } from 'motion/react';
-import { Search, Coins, Clock, Map as MapIcon, Calculator, BookOpen, ArrowUpRight, Bike, Compass, Tent, Car, MapPin } from 'lucide-react';
+import { Search, Coins, Clock, Map as MapIcon, Calculator, BookOpen, ArrowUpRight, Bike, Compass, Tent, Car, MapPin, Instagram } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import SEO from '@/src/components/SEO';
 import { cn } from '@/src/lib/utils';
@@ -154,6 +154,52 @@ export default function Home() {
           </motion.div>
         ))}
       </section>
+
+      {/* Instagram Banner */}
+      <motion.section 
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        className="mt-12 relative z-10"
+      >
+        <a 
+          href="https://www.instagram.com/trilhas_erodas/" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="group block relative overflow-hidden dashboard-card p-0 border-[#ff641d]/20 hover:border-[#ff641d]/40 transition-all duration-500"
+        >
+          <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-[#ff641d]/50 to-transparent"></div>
+          <div className="absolute -inset-1 bg-[#ff641d]/5 blur-2xl group-hover:bg-[#ff641d]/10 transition-all duration-500"></div>
+          
+          <div className="relative flex flex-col md:flex-row items-center justify-between gap-6 p-6 sm:p-10">
+            <div className="flex items-center gap-6">
+              <div className="w-16 h-16 rounded-full border-2 border-[#ff641d] flex items-center justify-center p-1 relative">
+                <div className="absolute inset-0 rounded-full bg-[#ff641d]/20 blur-md group-hover:blur-lg transition-all"></div>
+                <div className="w-full h-full rounded-full border border-[#ff641d]/30 flex items-center justify-center bg-[#0b0c0d] relative z-10">
+                  <Instagram size={28} className="text-[#ff641d]" />
+                </div>
+              </div>
+              
+              <div className="flex flex-col">
+                <h3 className="text-lg sm:text-xl font-display font-black text-white leading-tight uppercase tracking-tight">
+                  Acompanhe aventuras reais <br className="hidden sm:block" /> pela América Latina.
+                </h3>
+                <span className="text-xs font-mono text-[#ff641d] font-bold mt-1 tracking-widest">@TRILHAS_ERODAS</span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-4">
+              <div className="hidden lg:block text-right">
+                <div className="text-[10px] font-mono text-white/20 uppercase tracking-[0.3em]">Status: Ao vivo</div>
+                <div className="text-[8px] font-mono text-white/10 uppercase tracking-[0.2em] mt-1">Sincronizando expedicão...</div>
+              </div>
+              <div className="px-8 py-3 bg-[#1DB954] hover:bg-[#1ed760] text-[#0b0c0d] font-mono font-black text-[12px] uppercase tracking-widest rounded-full transition-all shadow-[0_0_20px_rgba(29,185,84,0.3)] hover:scale-105 active:scale-95 leading-none">
+                Seguir Jornada
+              </div>
+            </div>
+          </div>
+        </a>
+      </motion.section>
 
       {/* Stats/Badges Section */}
       <section className="mt-40 border-t border-white/5 pt-20 grid grid-cols-1 md:grid-cols-4 gap-12 relative z-10">
