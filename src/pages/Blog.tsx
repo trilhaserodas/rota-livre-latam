@@ -122,51 +122,87 @@ export default function Blog() {
             dangerouslySetInnerHTML={{ __html: selectedPost.content }}
           />
 
-          <div className="mt-20 pt-12 border-t border-white/5">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 mb-12">
+          <div className="mt-24 pt-12 border-t border-white/5">
+            <div className="flex flex-col gap-12">
+              {/* Author Info */}
               <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-full bg-[#ff641d] flex items-center justify-center font-display font-black text-white text-xs">
+                <div className="w-12 h-12 rounded-full bg-[#ff641d] flex items-center justify-center font-display font-black text-white shadow-[0_0_20px_rgba(255,100,29,0.3)]">
                   TR
                 </div>
                 <div>
-                  <div className="text-[10px] font-mono text-white uppercase tracking-widest">{selectedPost.author}</div>
-                  <div className="text-[8px] font-mono text-white/40 uppercase tracking-widest mt-1">Field Intelligence Unit</div>
+                  <div className="text-xs font-mono text-white uppercase tracking-widest">{selectedPost.author}</div>
+                  <div className="text-[10px] font-mono text-white/40 uppercase tracking-widest mt-1">Field Intelligence Lead</div>
                 </div>
               </div>
 
-              <div className="flex items-center gap-4">
-                <span className="text-[9px] font-mono text-white/20 uppercase tracking-[0.2em]">Compartilhar:</span>
-                <div className="flex items-center gap-2">
-                  <button 
-                    onClick={() => {
-                      const url = `https://wa.me/?text=${encodeURIComponent(`${selectedPost.title} - Rota Livre Hub: ${window.location.href}`)}`;
-                      window.open(url, '_blank');
-                    }}
-                    className="p-3 rounded-full bg-white/5 hover:bg-[#25D366]/10 hover:text-[#25D366] transition-all border border-white/5"
-                    title="Compartilhar no WhatsApp"
-                  >
-                    <MessageCircle size={18} />
-                  </button>
-                  <a 
-                    href="https://instagram.com/trilhas_erodas" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="p-3 rounded-full bg-white/5 hover:bg-[#E4405F]/10 hover:text-[#E4405F] transition-all border border-white/5"
-                    title="Seguir no Instagram"
-                  >
-                    <Instagram size={18} />
-                  </a>
-                  <button 
-                    onClick={() => {
-                      navigator.clipboard.writeText(window.location.href);
-                      alert('Link copiado!');
-                    }}
-                    className="p-3 rounded-full bg-white/5 hover:bg-[#ff641d]/10 hover:text-[#ff641d] transition-all border border-white/5"
-                    title="Copiar Link"
-                  >
-                    <Copy size={18} />
-                  </button>
+              {/* Share Interface */}
+              <div className="dashboard-card bg-white/[0.02] border-white/5 p-8 rounded-3xl">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-8">
+                  <div>
+                    <h4 className="text-sm font-display font-bold text-white uppercase tracking-tight mb-1">Compartilhar Relato</h4>
+                    <p className="text-[11px] text-white/30 font-mono uppercase tracking-widest">Disseminar inteligência na rede</p>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <button 
+                      onClick={() => {
+                        const url = `https://wa.me/?text=${encodeURIComponent(`${selectedPost.title} - Rota Livre Hub: ${window.location.href}`)}`;
+                        window.open(url, '_blank');
+                      }}
+                      className="flex-1 sm:flex-none flex items-center justify-center gap-3 px-6 py-3 rounded-2xl bg-[#25D366]/10 text-[#25D366] hover:bg-[#25D366] hover:text-white transition-all border border-[#25D366]/20 group"
+                      title="Compartilhar no WhatsApp"
+                    >
+                      <MessageCircle size={18} className="group-hover:scale-110 transition-transform" />
+                      <span className="text-[10px] font-mono font-bold uppercase tracking-widest">WhatsApp</span>
+                    </button>
+
+                    <button 
+                      onClick={() => {
+                        const url = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`;
+                        window.open(url, '_blank');
+                      }}
+                      className="flex-1 sm:flex-none flex items-center justify-center gap-3 px-6 py-3 rounded-2xl bg-[#1877F2]/10 text-[#1877F2] hover:bg-[#1877F2] hover:text-white transition-all border border-[#1877F2]/20 group"
+                      title="Compartilhar no Facebook"
+                    >
+                      <Share2 size={18} className="group-hover:scale-110 transition-transform" />
+                      <span className="text-[10px] font-mono font-bold uppercase tracking-widest">Facebook</span>
+                    </button>
+
+                    <button 
+                      onClick={() => {
+                        navigator.clipboard.writeText(window.location.href);
+                        const btn = document.getElementById('copy-btn');
+                        if (btn) {
+                          const originalHtml = btn.innerHTML;
+                          btn.innerHTML = '<span class="text-[10px] font-mono font-bold uppercase tracking-widest">Copiado!</span>';
+                          btn.classList.add('bg-[#ff641d]', 'text-white');
+                          setTimeout(() => {
+                            btn.innerHTML = originalHtml;
+                            btn.classList.remove('bg-[#ff641d]', 'text-white');
+                          }, 2000);
+                        }
+                      }}
+                      id="copy-btn"
+                      className="flex-1 sm:flex-none flex items-center justify-center gap-3 px-6 py-3 rounded-2xl bg-white/5 text-white/60 hover:bg-white/10 hover:text-white transition-all border border-white/10 group"
+                      title="Copiar Link"
+                    >
+                      <Copy size={18} className="group-hover:scale-110 transition-transform" />
+                      <span className="text-[10px] font-mono font-bold uppercase tracking-widest">Copiar Link</span>
+                    </button>
+                  </div>
                 </div>
+              </div>
+
+              {/* Instagram Promo */}
+              <div className="flex items-center justify-center py-8">
+                <a 
+                  href="https://instagram.com/trilhas_erodas" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 text-[10px] font-mono text-white/20 hover:text-[#E4405F] transition-colors uppercase tracking-[0.3em]"
+                >
+                  <Instagram size={14} /> Seguir @trilhas_erodas no Instagram
+                </a>
               </div>
             </div>
           </div>
