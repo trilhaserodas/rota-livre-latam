@@ -173,7 +173,7 @@ const posts = [
     category: 'FIELD_OPS',
     author: 'TR_COMMUNITY',
     date: '10.05.26',
-    image: 'https://images.unsplash.com/photo-1485965120184-e220f721d03e?auto=format&fit=crop&q=80&w=600',
+    image: 'https://i.ibb.co/m5pVgxG8/Chat-GPT-Image-10-de-mai-de-2026-18-21-16.png',
     content: `
       <p>Imagine isso: você está pedalando por uma estrada de terra no interior, o sol no topo da cabeça, nenhum sinal de celular, o próximo vilarejo a 40 quilômetros. E então — <strong>o barulho seco. A corrente quebra.</strong> O que você faz?</p>
       
