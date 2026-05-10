@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Link } from 'react-router-dom';
 import { 
@@ -17,9 +17,79 @@ import {
   ChevronRight,
   Info,
   Wind,
-  Filter
+  Filter,
+  CloudRain,
+  Thermometer,
+  Cloud
 } from 'lucide-react';
 import SEO from '@/src/components/SEO';
+
+// Componente de Clima em Tempo Real
+function WeatherMonitor() {
+  const [weather, setWeather] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const apiKey = import.meta.env.VITE_WEATHER_API_KEY;
+
+  useEffect(() => {
+    if (!apiKey) return;
+
+    // Busca clima padrão (ex: Ushuaia ou uma região crítica)
+    const fetchWeather = async () => {
+      try {
+        const response = await fetch(
+          `https://api.openweathermap.org/data/2.5/weather?q=Ushuaia&units=metric&appid=${apiKey}&lang=pt_br`
+        );
+        const data = await response.json();
+        if (data.cod === 200) setWeather(data);
+      } catch (error) {
+        console.error("Erro ao buscar clima:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchWeather();
+    const interval = setInterval(fetchWeather, 600000); // 10 min
+    return () => clearInterval(interval);
+  }, [apiKey]);
+
+  if (!apiKey) {
+    return (
+      <div className="dashboard-card p-6 border-white/[0.03] bg-white/[0.01]">
+        <div className="flex items-center gap-3 text-white/20">
+          <Cloud size={18} />
+          <span className="text-[10px] font-mono uppercase tracking-widest">Weather_Engine_Offline</span>
+        </div>
+        <p className="text-[9px] text-white/10 font-mono mt-2 italic uppercase">Configure VITE_WEATHER_API_KEY nas Settings</p>
+      </div>
+    );
+  }
+
+  if (loading || !weather) return <div className="h-24 animate-pulse bg-white/5 rounded-3xl" />;
+
+  return (
+    <div className="dashboard-card p-6 border-white/[0.05] bg-gradient-to-br from-white/[0.02] to-transparent">
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <CloudRain className="text-[#ff641d]" size={16} />
+          <span className="text-[10px] font-mono text-white/40 uppercase tracking-widest font-bold">Real_Time_Meteo</span>
+        </div>
+        <div className="w-1.5 h-1.5 rounded-full bg-green-500 shadow-[0_0_8px_#22c55e]" />
+      </div>
+      
+      <div className="flex items-end justify-between">
+        <div>
+          <div className="text-2xl font-display font-black text-white">{Math.round(weather.main.temp)}°C</div>
+          <div className="text-[10px] font-mono text-white/40 uppercase tracking-widest mt-1">{weather.name} / {weather.weather[0].description}</div>
+        </div>
+        <div className="text-right">
+          <div className="text-[10px] font-mono text-white/60 mb-1">UMIDADE</div>
+          <div className="text-xs font-mono text-white">{weather.main.humidity}%</div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 type Priority = 'LOW' | 'MODERATE' | 'ATTENTION' | 'CRITICAL';
 
@@ -265,6 +335,8 @@ export default function AlertHub() {
         {/* Sidebar Space */}
         <div className="lg:col-span-4 space-y-8">
           
+          <WeatherMonitor />
+
           {/* Hub Insights Area */}
           <div className="dashboard-card bg-[#ff641d]/[0.02] border-[#ff641d]/10 p-8 pt-6">
             <div className="flex items-center gap-3 mb-8">
