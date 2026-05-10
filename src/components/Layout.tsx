@@ -12,6 +12,7 @@ const navItems = [
   { name: 'Moedas', path: '/conversor', icon: Coins },
   { name: 'Fusos', path: '/horarios', icon: Clock },
   { name: 'Blog', path: '/blog', icon: BookOpen },
+  { name: 'Sobre', path: '/sobre', icon: Compass },
 ];
 
 export default function Layout({ children }: { children: React.ReactNode }) {
