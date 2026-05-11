@@ -146,9 +146,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               Tecnologia e utilidade pública gratuita para desbravadores.
             </p>
             <div className="flex gap-6">
-              <span className="text-[#ff641d] text-[10px] font-mono tracking-widest cursor-pointer hover:opacity-80">INSTAGRAM</span>
-              <span className="text-[#ff641d] text-[10px] font-mono tracking-widest cursor-pointer hover:opacity-80">YOUTUBE</span>
-              <span className="text-[#ff641d] text-[10px] font-mono tracking-widest cursor-pointer hover:opacity-80">GITHUB</span>
+              <a href="https://www.instagram.com/trilhas_erodas/" target="_blank" rel="noopener noreferrer" className="text-[#ff641d] text-[10px] font-mono tracking-widest hover:opacity-80 transition-opacity">INSTAGRAM</a>
+              <a href="https://www.youtube.com/@TrilhaserodasOficial" target="_blank" rel="noopener noreferrer" className="text-[#ff641d] text-[10px] font-mono tracking-widest hover:opacity-80 transition-opacity">YOUTUBE</a>
+              <span className="text-[#ff641d] text-[10px] font-mono tracking-widest opacity-20">GITHUB</span>
             </div>
           </div>
 
