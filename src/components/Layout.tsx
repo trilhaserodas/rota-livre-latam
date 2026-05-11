@@ -42,8 +42,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       >
         <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-3 group">
-            <div className="w-10 h-10 bg-[#ff641d] rounded-sm flex items-center justify-center group-hover:scale-105 transition-transform">
-              <Compass className="text-white" size={24} />
+            <div className="w-10 h-10 rounded-sm overflow-hidden group-hover:scale-105 transition-transform">
+              <img src="https://i.ibb.co/NnNRsj5N/Facion-site-rota-livre-hub.png" alt="Rota Livre Hub" className="w-full h-full object-cover" />
             </div>
             <div className="flex flex-col leading-none">
               <span className="text-xl font-display font-black tracking-tighter uppercase text-[#F8FAFC]">Rota Livre</span>
@@ -136,8 +136,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-20">
           <div className="col-span-1 md:col-span-2">
             <Link to="/" className="flex items-center gap-2 mb-8">
-              <div className="w-8 h-8 bg-[#ff641d] rounded-sm flex items-center justify-center">
-                <Compass size={18} className="text-white" />
+              <div className="w-8 h-8 rounded-sm overflow-hidden">
+                <img src="https://i.ibb.co/NnNRsj5N/Facion-site-rota-livre-hub.png" alt="Rota Livre Hub" className="w-full h-full object-cover" />
               </div>
               <span className="text-lg font-display font-black tracking-tighter uppercase text-[#F8FAFC]">Rota Livre</span>
             </Link>
