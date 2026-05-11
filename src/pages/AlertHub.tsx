@@ -20,7 +20,13 @@ import {
   Filter,
   CloudRain,
   Thermometer,
-  Cloud
+  Cloud,
+  CheckCircle2,
+  Lock,
+  Wifi,
+  Smartphone,
+  Eye,
+  Zap
 } from 'lucide-react';
 import SEO from '@/src/components/SEO';
 import ReportModal from '@/src/components/ReportModal';
@@ -235,6 +241,184 @@ const CATEGORIES = [
   { id: 'EQUIPAMENTO', label: 'GEAR', icon: Wrench },
 ];
 
+function SafetyGuidelines() {
+  return (
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="space-y-12 pb-20"
+    >
+      {/* Intro */}
+      <div className="dashboard-card p-8 border-[#ff641d]/10 bg-[#ff641d]/[0.02]">
+        <div className="flex items-center gap-4 mb-6">
+          <div className="p-3 rounded-xl bg-[#ff641d]/10 text-[#ff641d]">
+            <ShieldCheck size={24} />
+          </div>
+          <h2 className="text-2xl font-display font-black text-white uppercase tracking-tight">SEGURANÇA NA ESTRADA</h2>
+        </div>
+        <p className="text-white/60 text-sm font-mono uppercase tracking-widest leading-relaxed">
+          Viajar pela América Latina pode ser uma das experiências mais intensas e transformadoras da vida. 
+          Mas toda aventura exige atenção, leitura de ambiente e preparação.
+        </p>
+        <div className="mt-8 pt-8 border-t border-white/5">
+          <p className="text-[10px] text-white/30 font-mono uppercase tracking-[0.2em] leading-relaxed italic">
+            O objetivo desta área é reunir alertas, boas práticas e informações úteis para ajudar mochileiros, 
+            cicloturistas, moto viajantes e viajantes de motorhome a tomarem decisões mais seguras na estrada.
+          </p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        {/* Antes de Pegar a Estrada */}
+        <div className="dashboard-card p-8 border-white/[0.03]">
+          <div className="flex items-center gap-3 mb-6">
+             <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-white/40">
+                <Clock size={16} />
+             </div>
+             <h3 className="text-sm font-display font-black text-white uppercase tracking-widest">ANTES DE PEGAR A ESTRADA</h3>
+          </div>
+          <ul className="space-y-4">
+             {[
+               'Avise alguém sobre sua rota',
+               'Faça backup digital dos documentos',
+               'Tenha cópias físicas importantes',
+               'Salve mapas offline',
+               'Verifique clima e condições locais',
+               'Planeje pontos de apoio e abastecimento',
+               'Evite viajar sem água e comida reserva'
+             ].map((item, i) => (
+               <li key={i} className="flex items-center gap-3 text-[10px] font-mono text-white/40 uppercase tracking-widest">
+                 <CheckCircle2 size={12} className="text-[#ff641d]" />
+                 {item}
+               </li>
+             ))}
+          </ul>
+        </div>
+
+        {/* Segurança em Rotas */}
+        <div className="dashboard-card p-8 border-white/[0.03]">
+          <div className="flex items-center gap-3 mb-6">
+             <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-white/40">
+                <Globe size={16} />
+             </div>
+             <h3 className="text-sm font-display font-black text-white uppercase tracking-widest">ROTAS E FRONTEIRAS</h3>
+          </div>
+          <p className="text-[10px] text-orange-400/80 font-mono uppercase tracking-widest mb-6 bg-orange-400/5 p-3 rounded-lg border border-orange-400/10">
+            ⚠️ Pesquise a situação atual da região antes de cruzar fronteiras. Mudanças políticas ou climáticas podem alterar rotas rapidamente.
+          </p>
+          <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+             {['BLOQUEIOS', 'ESTRADAS INTERDITADAS', 'REGIÕES ISOLADAS', 'POSTOS FECHADOS', 'DOCUMENTAÇÃO', 'ALERTAS CLIMÁTICOS'].map((item, i) => (
+               <div key={i} className="flex items-center gap-2 text-[9px] font-mono text-white/20 uppercase tracking-widest">
+                 <div className="w-1 h-1 bg-white/10 rounded-full" />
+                 {item}
+               </div>
+             ))}
+          </div>
+        </div>
+
+        {/* Dicas Ciclo/Mochila */}
+        <div className="dashboard-card p-8 border-white/[0.03]">
+          <div className="flex items-center gap-3 mb-6">
+             <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-white/40">
+                <Backpack size={16} />
+             </div>
+             <h3 className="text-sm font-display font-black text-white uppercase tracking-widest">CICLO & MOCHILÃO</h3>
+          </div>
+          <div className="space-y-4">
+             <div className="flex items-start gap-4">
+                <div className="p-2 rounded-lg bg-[#ff641d]/5 text-[#ff641d]">
+                   <Eye size={14} />
+                </div>
+                <div>
+                   <div className="text-[10px] font-mono text-white/60 uppercase tracking-widest mb-1">MANTENHA VISIBILIDADE</div>
+                   <div className="text-[9px] font-mono text-white/30 uppercase leading-relaxed">Evite pedalar longos trechos à noite e não exponha equipamentos caros em áreas movimentadas.</div>
+                </div>
+             </div>
+             <div className="flex items-start gap-4">
+                <div className="p-2 rounded-lg bg-[#ff641d]/5 text-[#ff641d]">
+                   <MapPin size={14} />
+                </div>
+                <div>
+                   <div className="text-[10px] font-mono text-white/60 uppercase tracking-widest mb-1">LOCALIZAÇÃO</div>
+                   <div className="text-[9px] font-mono text-white/30 uppercase leading-relaxed">Compartilhe sua localização em tempo real com alguém de confiança.</div>
+                </div>
+             </div>
+             <div className="flex items-start gap-4">
+                <div className="p-2 rounded-lg bg-[#ff641d]/5 text-[#ff641d]">
+                   <Thermometer size={14} />
+                </div>
+                <div>
+                   <div className="text-[10px] font-mono text-white/60 uppercase tracking-widest mb-1">ESTADO AMBIENTAL</div>
+                   <div className="text-[9px] font-mono text-white/30 uppercase leading-relaxed">Sempre acompanhe a previsão do tempo e prefira locais indicados pela comunidade.</div>
+                </div>
+             </div>
+          </div>
+        </div>
+
+        {/* Segurança Digital */}
+        <div className="dashboard-card p-8 border-white/[0.03]">
+          <div className="flex items-center gap-3 mb-6">
+             <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-white/40">
+                <Smartphone size={16} />
+             </div>
+             <h3 className="text-sm font-display font-black text-white uppercase tracking-widest">SEGURANÇA DIGITAL</h3>
+          </div>
+          <div className="space-y-6">
+             <div className="grid grid-cols-1 gap-4">
+                <div className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.02] border border-white/5">
+                   <Wifi size={14} className="text-[#ff641d]" />
+                   <span className="text-[9px] font-mono text-white/40 uppercase tracking-widest">Evite redes Wi-Fi públicas sem proteção</span>
+                </div>
+                <div className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.02] border border-white/5">
+                   <Lock size={14} className="text-[#ff641d]" />
+                   <span className="text-[9px] font-mono text-white/40 uppercase tracking-widest">Use autenticação em dois fatores</span>
+                </div>
+                <div className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.02] border border-white/5">
+                   <Cloud size={14} className="text-[#ff641d]" />
+                   <span className="text-[9px] font-mono text-white/40 uppercase tracking-widest">Backup de documentos na nuvem</span>
+                </div>
+             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Community / Sensor Section */}
+      <div className="dashboard-card p-10 border-[#ff641d]/20 bg-gradient-to-br from-[#ff641d]/10 via-transparent to-transparent text-center">
+         <div className="max-w-2xl mx-auto">
+            <h3 className="text-3xl font-display font-black text-white uppercase tracking-tighter mb-4">COMUNIDADE E ALERTAS</h3>
+            <p className="text-white/40 text-xs font-mono uppercase tracking-[0.2em] leading-relaxed mb-8">
+               O Rota Livre Hub funciona como uma inteligência coletiva da estrada. 
+               Se encontrar riscos, bloqueios, golpes ou estradas perigosas, compartilhe com a comunidade.
+            </p>
+            
+            <div className="flex flex-col items-center gap-6">
+               <div className="p-1 rounded-full bg-[#ff641d]/20">
+                  <div className="px-8 py-3 rounded-full bg-[#ff641d] text-white font-display font-black text-sm uppercase tracking-tighter shadow-[0_0_30px_rgba(255,100,29,0.4)]">
+                     SEJA UM SENSOR
+                  </div>
+               </div>
+               <p className="text-[10px] text-[#ff641d] font-mono font-bold uppercase tracking-[0.4em] animate-pulse">
+                  Sua informação pode ajudar outros viajantes em tempo real.
+               </p>
+            </div>
+         </div>
+      </div>
+
+      {/* Final Note */}
+      <div className="text-center">
+         <div className="inline-flex items-center gap-4 text-white/10 mb-6">
+            <div className="w-12 h-[1px] bg-white/10" />
+            <Zap size={20} />
+            <div className="w-12 h-[1px] bg-white/10" />
+         </div>
+         <h4 className="text-lg font-display font-black text-white/60 uppercase tracking-widest mb-4">A MELHOR FERRAMENTA É O SEU PLANEJAMENTO</h4>
+         <p className="text-[10px] text-white/20 font-mono uppercase tracking-[0.5em]">ATENÇÃO • PLANEJAMENTO • COMUNIDADE</p>
+         <div className="mt-8 text-[9px] font-mono text-white/30 uppercase tracking-widest italic">Viaje consciente. Viaje preparado. Boa estrada. 🌎</div>
+      </div>
+    </motion.div>
+  );
+}
+
 const PRIORITY_THEMES = {
   LOW: { color: 'text-blue-400', bg: 'bg-blue-400/10', border: 'border-blue-400/20', glow: 'shadow-[0_0_15px_rgba(96,165,250,0.1)]' },
   MODERATE: { color: 'text-green-400', bg: 'bg-green-400/10', border: 'border-green-400/20', glow: 'shadow-[0_0_15px_rgba(74,222,128,0.1)]' },
@@ -321,123 +505,127 @@ export default function AlertHub() {
 
           {/* Alerts List */}
           <div className="space-y-4">
-            <AnimatePresence mode="popLayout">
-              {filteredAlerts.flatMap((alert, index) => {
-                const isExpanded = expandedAlertId === alert.id;
-                const items = [
-                  <motion.div
-                    key={alert.id}
-                    layout
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.95 }}
-                    className={`dashboard-card group p-6 border-white/[0.03] hover:border-white/10 transition-all cursor-pointer overflow-hidden relative ${isExpanded ? 'border-[#ff641d]/30 bg-[#ff641d]/[0.02]' : ''}`}
-                    onClick={() => setExpandedAlertId(isExpanded ? null : alert.id)}
-                  >
-                    {/* Priority Indicator Line */}
-                    <div className={`absolute top-0 left-0 w-1 h-full ${PRIORITY_THEMES[alert.priority].bg.replace('bg-', 'bg-opacity-100 bg-')}`} />
-                    
-                    <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-4 mb-4">
-                          <span className={`text-[9px] font-mono font-bold px-2 py-0.5 rounded ${PRIORITY_THEMES[alert.priority].bg} ${PRIORITY_THEMES[alert.priority].color} uppercase tracking-widest`}>
-                            {alert.priority}
-                          </span>
-                          <span className="text-[9px] font-mono text-white/20 uppercase tracking-widest flex items-center gap-2">
-                            <Clock size={10} /> {alert.date}
-                          </span>
-                          <span className="text-[9px] font-mono text-[#ff641d]/60 uppercase tracking-widest">
-                             {alert.category}
-                          </span>
-                        </div>
-                        
-                        <h3 className="text-xl font-display font-black text-white uppercase tracking-tight mb-3 group-hover:text-[#ff641d] transition-colors leading-tight">
-                          {alert.title}
-                        </h3>
-                        
-                        <p className="text-white/40 text-xs leading-relaxed font-sans mb-4 max-w-xl">
-                          {alert.summary}
-                        </p>
-  
-                        <div className="flex items-center gap-4 text-[10px] font-mono text-white/60 uppercase tracking-widest">
-                          <span className="flex items-center gap-1.5"><MapPin size={12} className="text-[#ff641d]" /> {alert.region}</span>
-                          <span className="text-white/10">|</span>
-                          <span className="text-white/30">{alert.country}</span>
-                        </div>
-
-                        {/* Expanded Info */}
-                        <AnimatePresence>
-                          {isExpanded && (
-                            <motion.div
-                              initial={{ height: 0, opacity: 0 }}
-                              animate={{ height: 'auto', opacity: 1 }}
-                              exit={{ height: 0, opacity: 0 }}
-                              className="overflow-hidden"
-                            >
-                              <div className="pt-8 mt-8 border-t border-white/5 grid grid-cols-1 md:grid-cols-2 gap-8">
-                                <div>
-                                  <div className="text-[9px] font-mono text-[#ff641d] uppercase tracking-[0.3em] mb-4 font-bold flex items-center gap-2">
-                                    <div className="w-4 h-[1px] bg-[#ff641d]" /> CAUSAS_PROVÁVEIS
-                                  </div>
-                                  <ul className="space-y-2">
-                                    {alert.causes.map((cause, i) => (
-                                      <li key={i} className="text-[10px] text-white/60 font-mono uppercase tracking-widest flex items-start gap-2">
-                                        <span className="text-[#ff641d]">•</span> {cause}
-                                      </li>
-                                    ))}
-                                  </ul>
-                                </div>
-                                <div>
-                                  <div className="text-[9px] font-mono text-[#ff641d] uppercase tracking-[0.3em] mb-4 font-bold flex items-center gap-2">
-                                    <div className="w-4 h-[1px] bg-[#ff641d]" /> RECOMENDAÇÕES_SAFETY
-                                  </div>
-                                  <ul className="space-y-2">
-                                    {alert.safetyBrief.map((item, i) => (
-                                      <li key={i} className="text-[10px] text-white/60 font-mono uppercase tracking-widest flex items-start gap-2">
-                                        <span className="text-[#ff641d]">•</span> {item}
-                                      </li>
-                                    ))}
-                                  </ul>
-                                </div>
-                                <div className="md:col-span-2 pt-4 border-t border-white/5 flex items-center justify-between">
-                                  <div className="text-[8px] font-mono text-white/20 uppercase tracking-[0.2em]">
-                                    Protocolo: TR-SEC-{alert.id}
-                                  </div>
-                                  <div className="text-[9px] font-mono text-white/40 uppercase tracking-widest italic">
-                                    Última Atualização: <span className="text-[#ff641d]/60">{alert.lastUpdate}</span>
-                                  </div>
-                                </div>
-                              </div>
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
-                      </div>
-  
-                      <div className={`mt-4 md:mt-0 flex items-center gap-2 self-end md:self-center text-[10px] font-mono font-bold transition-all uppercase tracking-[0.2em] ${isExpanded ? 'text-white' : 'text-white/20 group-hover:text-white'}`}>
-                        {isExpanded ? 'FECHAR' : 'DETALHES'} 
-                        <ChevronRight size={14} className={`text-[#ff641d] transition-transform duration-300 ${isExpanded ? 'rotate-90' : ''}`} />
-                      </div>
-                    </div>
-                  </motion.div>
-                ];
-
-                if (index === 1) {
-                  items.push(
-                    <motion.div 
-                      key="alert-list-ad"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
+            {activeCategory === 'SEGURANÇA' ? (
+              <SafetyGuidelines />
+            ) : (
+              <AnimatePresence mode="popLayout">
+                {filteredAlerts.flatMap((alert, index) => {
+                  const isExpanded = expandedAlertId === alert.id;
+                  const items = [
+                    <motion.div
+                      key={alert.id}
+                      layout
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.95 }}
+                      className={`dashboard-card group p-6 border-white/[0.03] hover:border-white/10 transition-all cursor-pointer overflow-hidden relative ${isExpanded ? 'border-[#ff641d]/30 bg-[#ff641d]/[0.02]' : ''}`}
+                      onClick={() => setExpandedAlertId(isExpanded ? null : alert.id)}
                     >
-                      <AdSense slot="alert_list_inline_ad" className="min-h-[100px] border-none bg-transparent" />
+                      {/* Priority Indicator Line */}
+                      <div className={`absolute top-0 left-0 w-1 h-full ${PRIORITY_THEMES[alert.priority].bg.replace('bg-', 'bg-opacity-100 bg-')}`} />
+                      
+                      <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-4 mb-4">
+                            <span className={`text-[9px] font-mono font-bold px-2 py-0.5 rounded ${PRIORITY_THEMES[alert.priority].bg} ${PRIORITY_THEMES[alert.priority].color} uppercase tracking-widest`}>
+                              {alert.priority}
+                            </span>
+                            <span className="text-[9px] font-mono text-white/20 uppercase tracking-widest flex items-center gap-2">
+                              <Clock size={10} /> {alert.date}
+                            </span>
+                            <span className="text-[9px] font-mono text-[#ff641d]/60 uppercase tracking-widest">
+                               {alert.category}
+                            </span>
+                          </div>
+                          
+                          <h3 className="text-xl font-display font-black text-white uppercase tracking-tight mb-3 group-hover:text-[#ff641d] transition-colors leading-tight">
+                            {alert.title}
+                          </h3>
+                          
+                          <p className="text-white/40 text-xs leading-relaxed font-sans mb-4 max-w-xl">
+                            {alert.summary}
+                          </p>
+    
+                          <div className="flex items-center gap-4 text-[10px] font-mono text-white/60 uppercase tracking-widest">
+                            <span className="flex items-center gap-1.5"><MapPin size={12} className="text-[#ff641d]" /> {alert.region}</span>
+                            <span className="text-white/10">|</span>
+                            <span className="text-white/30">{alert.country}</span>
+                          </div>
+  
+                          {/* Expanded Info */}
+                          <AnimatePresence>
+                            {isExpanded && (
+                              <motion.div
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: 'auto', opacity: 1 }}
+                                exit={{ height: 0, opacity: 0 }}
+                                className="overflow-hidden"
+                              >
+                                <div className="pt-8 mt-8 border-t border-white/5 grid grid-cols-1 md:grid-cols-2 gap-8">
+                                  <div>
+                                    <div className="text-[9px] font-mono text-[#ff641d] uppercase tracking-[0.3em] mb-4 font-bold flex items-center gap-2">
+                                      <div className="w-4 h-[1px] bg-[#ff641d]" /> CAUSAS_PROVÁVEIS
+                                    </div>
+                                    <ul className="space-y-2">
+                                      {alert.causes.map((cause, i) => (
+                                        <li key={i} className="text-[10px] text-white/60 font-mono uppercase tracking-widest flex items-start gap-2">
+                                          <span className="text-[#ff641d]">•</span> {cause}
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  </div>
+                                  <div>
+                                    <div className="text-[9px] font-mono text-[#ff641d] uppercase tracking-[0.3em] mb-4 font-bold flex items-center gap-2">
+                                      <div className="w-4 h-[1px] bg-[#ff641d]" /> RECOMENDAÇÕES_SAFETY
+                                    </div>
+                                    <ul className="space-y-2">
+                                      {alert.safetyBrief.map((item, i) => (
+                                        <li key={i} className="text-[10px] text-white/60 font-mono uppercase tracking-widest flex items-start gap-2">
+                                          <span className="text-[#ff641d]">•</span> {item}
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  </div>
+                                  <div className="md:col-span-2 pt-4 border-t border-white/5 flex items-center justify-between">
+                                    <div className="text-[8px] font-mono text-white/20 uppercase tracking-[0.2em]">
+                                      Protocolo: TR-SEC-{alert.id}
+                                    </div>
+                                    <div className="text-[9px] font-mono text-white/40 uppercase tracking-widest italic">
+                                      Última Atualização: <span className="text-[#ff641d]/60">{alert.lastUpdate}</span>
+                                    </div>
+                                  </div>
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </div>
+    
+                        <div className={`mt-4 md:mt-0 flex items-center gap-2 self-end md:self-center text-[10px] font-mono font-bold transition-all uppercase tracking-[0.2em] ${isExpanded ? 'text-white' : 'text-white/20 group-hover:text-white'}`}>
+                          {isExpanded ? 'FECHAR' : 'DETALHES'} 
+                          <ChevronRight size={14} className={`text-[#ff641d] transition-transform duration-300 ${isExpanded ? 'rotate-90' : ''}`} />
+                        </div>
+                      </div>
                     </motion.div>
-                  );
-                }
+                  ];
+  
+                  if (index === 1) {
+                    items.push(
+                      <motion.div 
+                        key="alert-list-ad"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                      >
+                        <AdSense slot="alert_list_inline_ad" className="min-h-[100px] border-none bg-transparent" />
+                      </motion.div>
+                    );
+                  }
+  
+                  return items;
+                })}
+              </AnimatePresence>
+            )}
 
-                return items;
-              })}
-            </AnimatePresence>
-
-            {filteredAlerts.length === 0 && (
+            {activeCategory !== 'SEGURANÇA' && filteredAlerts.length === 0 && (
               <div className="py-20 text-center border border-dashed border-white/5 rounded-3xl">
                 <div className="text-white/10 font-mono text-xs uppercase tracking-[0.4em]">
                   Nenhum dado encontrado para os parâmetros atuais
