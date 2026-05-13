@@ -17,6 +17,7 @@ import {
   ChevronRight,
   Info,
   Wind,
+  ExternalLink,
   Filter,
   CloudRain,
   Thermometer,
@@ -578,13 +579,21 @@ export default function AlertHub() {
                                     <div className="text-[9px] font-mono text-[#ff641d] uppercase tracking-[0.3em] mb-4 font-bold flex items-center gap-2">
                                       <div className="w-4 h-[1px] bg-[#ff641d]" /> RECOMENDAÇÕES_SAFETY
                                     </div>
-                                    <ul className="space-y-2">
+                                    <ul className="space-y-2 mb-6">
                                       {alert.safetyBrief.map((item, i) => (
                                         <li key={i} className="text-[10px] text-white/60 font-mono uppercase tracking-widest flex items-start gap-2">
                                           <span className="text-[#ff641d]">•</span> {item}
                                         </li>
                                       ))}
                                     </ul>
+                                    
+                                    <Link 
+                                      to="/mapa" 
+                                      className="inline-flex items-center gap-2 text-[9px] font-mono text-[#ff641d] hover:text-white transition-colors uppercase tracking-widest font-bold group/map"
+                                    >
+                                      <ExternalLink size={12} className="group-hover/map:translate-x-0.5 group-hover/map:-translate-y-0.5 transition-transform" />
+                                      VER NO MAPA_ESTRATÉGICO
+                                    </Link>
                                   </div>
                                   <div className="md:col-span-2 pt-4 border-t border-white/5 flex items-center justify-between">
                                     <div className="text-[8px] font-mono text-white/20 uppercase tracking-[0.2em]">

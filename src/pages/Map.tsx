@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
-import { Search, Filter, Tent, MapPin, Hammer, Coffee, Droplets, Camera, AlertTriangle, ShieldCheck, Layers, ArrowUpRight, Bike, Triangle } from 'lucide-react';
+import { Search, Filter, Tent, MapPin, Hammer, Coffee, Droplets, Camera, AlertTriangle, ShieldCheck, Layers, ArrowUpRight, Bike, Triangle, Plus, Minus } from 'lucide-react';
 import SEO from '@/src/components/SEO';
 import { cn } from '@/src/lib/utils';
 import { LocationPoint } from '@/src/types';
@@ -110,6 +110,29 @@ function createCustomIcon(color: string) {
 
 const customIcon = createCustomIcon('#ff641d');
 
+function ZoomControl() {
+  const map = useMap();
+  
+  return (
+    <div className="absolute top-1/2 -translate-y-1/2 right-6 z-[1000] flex flex-col gap-2">
+      <button 
+        onClick={() => map.zoomIn()}
+        title="Zoom In"
+        className="w-10 h-10 bg-black/60 backdrop-blur-md border border-white/10 rounded-sm flex items-center justify-center text-[#ff641d] hover:bg-[#ff641d] hover:text-white transition-all shadow-xl group"
+      >
+        <Plus size={20} className="group-hover:scale-110 transition-transform" />
+      </button>
+      <button 
+        onClick={() => map.zoomOut()}
+        title="Zoom Out"
+        className="w-10 h-10 bg-black/60 backdrop-blur-md border border-white/10 rounded-sm flex items-center justify-center text-[#ff641d] hover:bg-[#ff641d] hover:text-white transition-all shadow-xl group"
+      >
+        <Minus size={20} className="group-hover:scale-110 transition-transform" />
+      </button>
+    </div>
+  );
+}
+
 export default function AdventureMap() {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -186,8 +209,8 @@ export default function AdventureMap() {
               center={[-34.603, -58.381] as [number, number]} 
               zoom={4} 
               style={{ width: '100%', height: '100%', background: '#0b0c0d' }}
-              zoomControl={false}
             >
+              <ZoomControl />
               <TileLayer
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
                 url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
