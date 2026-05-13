@@ -87,12 +87,126 @@ const initialPoints: LocationPoint[] = [
     lng: -70.634,
     category: 'repair',
     description: 'Oficina especializada em BMW e KTM. Peças originais para expedições.',
+  },
+  {
+    id: 'col-1',
+    name: 'Los Patios Hostel Boutique - Medellín',
+    lat: 6.2131,
+    lng: -75.5729,
+    category: 'hostel',
+    description: '★ 4.6 | Rooftop com vista, aulas de salsa e yoga. Bairro El Poblado.',
+    image: 'https://images.unsplash.com/photo-1555854817-2b22464d13af?auto=format&fit=crop&q=80&w=400'
+  },
+  {
+    id: 'col-2',
+    name: 'Rio Elemento - Minca',
+    lat: 11.1453,
+    lng: -74.1149,
+    category: 'hostel',
+    description: '★ 4.3 | Hostel na selva com piscina e rio para nadar. Serra Nevada.',
+  },
+  {
+    id: 'equ-1',
+    name: 'Hostel Revolution - Quito',
+    lat: -0.2163,
+    lng: -78.5015,
+    category: 'hostel',
+    description: '★ 4.6 | Acolhedor, café da manhã incluso, terraço panorâmico.',
+  },
+  {
+    id: 'per-1',
+    name: 'Pariwana Hostel - Lima',
+    lat: -12.1196,
+    lng: -77.0288,
+    category: 'hostel',
+    description: '★ 4.5 | Hostel social no bairro Miraflores, rooftop e atividades.',
+  },
+  {
+    id: 'per-2',
+    name: 'Wild Rover Hostel - Cusco',
+    lat: -13.5143,
+    lng: -71.9852,
+    category: 'hostel',
+    description: '★ 4.7 | Bar enorme, eventos diários, base para Machu Picchu.',
+  },
+  {
+    id: 'per-3',
+    name: 'Loki Hostel - Cusco',
+    lat: -13.5152,
+    lng: -71.9844,
+    category: 'hostel',
+    description: '★ 4.4 | Vista para a Plaza de Armas, atmosfera relaxada.',
+  },
+  {
+    id: 'per-4',
+    name: 'Viajero Hostel - Cusco',
+    lat: -13.5199,
+    lng: -71.9788,
+    category: 'hostel',
+    description: '★ 4.7 | Excelente para organizar tours para Machu Picchu.',
+  },
+  {
+    id: 'bol-1',
+    name: 'Wild Rover Hostel - La Paz',
+    lat: -16.4976,
+    lng: -68.1313,
+    category: 'hostel',
+    description: '★ 4.7 | Base ideal para o Salar de Uyuni e Titicaca. Festivo.',
+  },
+  {
+    id: 'chi-1',
+    name: 'Andes Nomads Desert Camp - Atacama',
+    lat: -22.9836,
+    lng: -68.1827,
+    category: 'camping',
+    description: '★ 4.7 | Duchas de água quente, redes, energia elétrica no Atacama.',
+  },
+  {
+    id: 'chi-2',
+    name: 'Hostel Forestal - Santiago',
+    lat: -33.4373,
+    lng: -70.6373,
+    category: 'hostel',
+    description: '★ 4.5 | Ao lado do Parque Forestal, bairro artístico.',
+  },
+  {
+    id: 'chi-3',
+    name: 'Camping Lago Pehoe - Torres del Paine',
+    lat: -51.1081,
+    lng: -72.9854,
+    category: 'camping',
+    description: '★ 4.1 | À beira do Lago Pehoé, no coração do parque nacional.',
+  },
+  {
+    id: 'chi-4',
+    name: 'EcoCamp Patagonia - Torres del Paine',
+    lat: -50.9632,
+    lng: -72.8636,
+    category: 'camping',
+    description: '★ 4.7 | Domos geodésicos sustentáveis com refeições inclusas.',
+  },
+  {
+    id: 'arg-1',
+    name: 'América del Sur Hostel - El Calafate',
+    lat: -50.3342,
+    lng: -72.2560,
+    category: 'hostel',
+    description: '★ 4.6 | Gateway para Perito Moreno, camas de alta recuperação.',
+  },
+  {
+    id: 'arg-2',
+    name: 'Milhouse Hostel Avenue - Buenos Aires',
+    lat: -34.6090,
+    lng: -58.3841,
+    category: 'hostel',
+    description: '★ 4.3 | Rooftop, festas, aulas de tango e noites temáticas.',
   }
 ];
 
 const categories = [
   { id: 'all', name: 'Todos', icon: Globe, color: '#ff641d' },
   { id: 'camping', name: 'Camping', icon: Tent, color: '#10b981' },
+  { id: 'hostel', name: 'Hostels', icon: Coffee, color: '#ff641d' },
   { id: 'water', name: 'Água', icon: Droplets, color: '#0ea5e9' },
   { id: 'repair', name: 'Oficina', icon: Hammer, color: '#f59e0b' },
   { id: 'danger', name: 'Perigo', icon: AlertTriangle, color: '#ef4444' },
@@ -106,8 +220,8 @@ function createCustomIcon(color: string, glow: boolean = true) {
     className: 'custom-div-icon',
     html: `
       <div class="relative flex items-center justify-center">
-        <div class="w-4 h-4 bg-[${color}] rounded-full border-2 border-[#0b0c0d] relative z-10 ${glow ? 'shadow-[0_0_15px_' + color + ']' : ''}"></div>
-        ${glow ? `<div class="absolute w-6 h-6 bg-[${color}] opacity-20 rounded-full animate-ping"></div>` : ''}
+        <div style="background-color: ${color}; box-shadow: ${glow ? '0 0 15px ' + color : 'none'}" class="w-4 h-4 rounded-full border-2 border-[#0b0c0d] relative z-10"></div>
+        ${glow ? `<div style="background-color: ${color}" class="absolute w-6 h-6 opacity-20 rounded-full animate-ping"></div>` : ''}
       </div>
     `,
     iconSize: [24, 24],
@@ -345,7 +459,7 @@ export default function AdventureMap() {
               <Marker 
                 key={p.id} 
                 position={[p.lat, p.lng]} 
-                icon={createCustomIcon(cat.color, p.category === 'danger')}
+                icon={createCustomIcon(cat.color, p.category === 'danger' || p.category === 'hostel')}
               >
                 <Popup className="custom-popup">
                   <div className="p-1 min-w-[240px] bg-[#0b0c0d] text-[#F8FAFC]">
