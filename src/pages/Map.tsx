@@ -360,18 +360,58 @@ const initialPoints: LocationPoint[] = [
     lng: -54.576,
     category: 'camping',
     description: '★ 4.3 | Piscina e wi-fi. 10 min das Cataratas.',
+  },
+  {
+    id: 'fuel-br-1',
+    name: 'Posto Graal 125 Sul - Ribeirão Preto',
+    lat: -21.2258,
+    lng: -47.7802,
+    category: 'fuel',
+    description: 'Ponto estratégico na BR-050. Infraestrutura completa de suporte.',
+  },
+  {
+    id: 'fuel-br-2',
+    name: 'Posto Chalezão - BR-040 MG',
+    lat: -20.0612,
+    lng: -43.9354,
+    category: 'fuel',
+    description: 'Ponto de encontro clássico. Suporte operacional e alimentação.',
+  },
+  {
+    id: 'fuel-br-3',
+    name: 'Auto Posto Ipiranga - Bonito MS',
+    lat: -21.1215,
+    lng: -56.4815,
+    category: 'fuel',
+    description: 'Abastecimento central para expedições no Pantanal Sul.',
+  },
+  {
+    id: 'fuel-br-4',
+    name: 'Posto Atem - Alter do Chão PA',
+    lat: -2.5055,
+    lng: -54.9388,
+    category: 'fuel',
+    description: 'Suporte logístico vital na região do Rio Tapajós.',
+  },
+  {
+    id: 'fuel-br-5',
+    name: 'Posto Transamazônica - Itaituba',
+    lat: -4.2655,
+    lng: -55.9822,
+    category: 'fuel',
+    description: 'Operação crítica na BR-230. Verifique estoque antes de prosseguir.',
   }
 ];
 
 const categories = [
   { id: 'all', name: 'Todos', icon: Globe, color: '#ff641d' },
   { id: 'camping', name: 'Camping', icon: Tent, color: '#ff641d' },
-  { id: 'hostel', name: 'Hostels', icon: Coffee, color: '#ff641d' },
-  { id: 'water', name: 'Água', icon: Droplets, color: '#0ea5e9' },
+  { id: 'hostel', name: 'Hostels', icon: Coffee, color: '#ff9d00' },
+  { id: 'water', name: 'Água', icon: Droplets, color: '#00d4ff' },
   { id: 'repair', name: 'Oficina', icon: Hammer, color: '#f59e0b' },
-  { id: 'danger', name: 'Perigo', icon: AlertTriangle, color: '#ef4444' },
+  { id: 'danger', name: 'Perigo', icon: AlertTriangle, color: '#ff0000' },
   { id: 'safe_point', name: 'Seguro', icon: ShieldCheck, color: '#10b981' },
-  { id: 'fuel', name: 'Combustível', icon: Fuel, color: '#ec4899' },
+  { id: 'fuel', name: 'Combustível', icon: Fuel, color: '#fff200' },
   { id: 'policing', name: 'Fiscalização', icon: Shield, color: '#6366f1' },
 ];
 
@@ -380,12 +420,13 @@ function createCustomIcon(color: string, glow: boolean = true) {
     className: 'custom-div-icon',
     html: `
       <div class="relative flex items-center justify-center">
-        <div style="background-color: ${color}; box-shadow: ${glow ? '0 0 15px ' + color : 'none'}" class="w-4 h-4 rounded-full border-2 border-[#0b0c0d] relative z-10"></div>
-        ${glow ? `<div style="background-color: ${color}" class="absolute w-6 h-6 opacity-20 rounded-full animate-ping"></div>` : ''}
+        ${glow ? `<div style="border-color: ${color}; box-shadow: inset 0 0 8px ${color}" class="absolute w-7 h-7 rounded-full border opacity-30 animate-pulse"></div>` : ''}
+        ${glow ? `<div style="background-color: ${color}" class="absolute w-5 h-5 opacity-20 rounded-full animate-ping"></div>` : ''}
+        <div style="background-color: ${color}; box-shadow: 0 0 15px ${color}" class="w-3 h-3 rounded-full border-2 border-[#0b0c0d] relative z-10 transition-transform hover:scale-125"></div>
       </div>
     `,
-    iconSize: [24, 24],
-    iconAnchor: [12, 12],
+    iconSize: [32, 32],
+    iconAnchor: [16, 16],
   });
 }
 
@@ -619,7 +660,7 @@ export default function AdventureMap() {
               <Marker 
                 key={p.id} 
                 position={[p.lat, p.lng]} 
-                icon={createCustomIcon(cat.color, p.category === 'danger' || p.category === 'hostel' || p.category === 'camping')}
+                icon={createCustomIcon(cat.color, p.category === 'danger' || p.category === 'hostel' || p.category === 'camping' || p.category === 'fuel')}
               >
                 <Popup className="custom-popup">
                   <div className="p-1 min-w-[240px] bg-[#0b0c0d] text-[#F8FAFC]">
