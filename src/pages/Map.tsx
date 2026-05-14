@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap, ZoomControl as LeafletZoomControl } from 'react-leaflet';
 import L from 'leaflet';
+import 'leaflet.heat';
 import { 
   Search, Filter, Tent, MapPin, Hammer, Coffee, Droplets, 
   Camera, AlertTriangle, ShieldCheck, Layers, ArrowUpRight, 
@@ -442,7 +443,21 @@ const initialPoints: LocationPoint[] = [
     lng: -46.723,
     category: 'bike_route',
     description: 'Melhor infraestrutura cicloviária de SP. Conexão entre polos de aventura.',
-  }
+  },
+  // Additional points for Heatmap visualization
+  { id: 'h1', name: 'Camping P1', lat: -45.5, lng: -72.0, category: 'camping', description: 'POI' },
+  { id: 'h2', name: 'Camping P2', lat: -45.6, lng: -72.1, category: 'camping', description: 'POI' },
+  { id: 'h3', name: 'Oficina P3', lat: -45.55, lng: -72.05, category: 'repair', description: 'POI' },
+  { id: 'h4', name: 'Ponto Seguro P4', lat: -45.58, lng: -72.08, category: 'safe_point', description: 'POI' },
+  { id: 'h5', name: 'Camping P5', lat: -23.5, lng: -46.6, category: 'camping', description: 'POI' },
+  { id: 'h6', name: 'Oficina P6', lat: -23.6, lng: -46.7, category: 'repair', description: 'POI' },
+  { id: 'h7', name: 'Ponto Seguro P7', lat: -23.55, lng: -46.65, category: 'safe_point', description: 'POI' },
+  { id: 'h8', name: 'Camping P8', lat: -13.5, lng: -71.9, category: 'camping', description: 'POI' },
+  { id: 'h9', name: 'Oficina P9', lat: -13.6, lng: -72.0, category: 'repair', description: 'POI' },
+  { id: 'h10', name: 'Ponto Seguro P10', lat: -13.55, lng: -71.95, category: 'safe_point', description: 'POI' },
+  { id: 'h11', name: 'Camping P11', lat: -22.9, lng: -68.2, category: 'camping', description: 'POI' },
+  { id: 'h12', name: 'Oficina P12', lat: -23.0, lng: -68.3, category: 'repair', description: 'POI' },
+  { id: 'h13', name: 'Ponto Seguro P13', lat: -22.95, lng: -68.25, category: 'safe_point', description: 'POI' },
 ];
 
 const categories = [
@@ -502,6 +517,31 @@ function MapController({ center, zoom, userLocation }: { center?: [number, numbe
   return null;
 }
 
+function HeatmapLayer({ points, active }: { points: LocationPoint[], active: boolean }) {
+  const map = useMap();
+  
+  useEffect(() => {
+    if (!active) return;
+
+    const heatPoints: [number, number, number][] = points.map(p => [p.lat, p.lng, 1]);
+    
+    // @ts-ignore
+    const heatLayer = L.heatLayer(heatPoints, {
+      radius: 35,
+      blur: 20,
+      maxZoom: 10,
+      gradient: { 0.4: '#ff641d33', 0.6: '#ff641d66', 0.8: '#ff641d99', 1.0: '#ff641d' }
+    });
+    
+    heatLayer.addTo(map);
+    return () => {
+      map.removeLayer(heatLayer);
+    };
+  }, [map, points, active]);
+
+  return null;
+}
+
 export default function AdventureMap() {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -509,6 +549,7 @@ export default function AdventureMap() {
   const [mapCenter, setMapCenter] = useState<[number, number]>([-34.603, -58.381]);
   const [mapZoom, setMapZoom] = useState(4);
   const [isSearching, setIsSearching] = useState(false);
+  const [showHeatmap, setShowHeatmap] = useState(false);
 
   // Auto-location
   const handleLocateUser = useCallback(() => {
@@ -636,6 +677,22 @@ export default function AdventureMap() {
               </div>
             </button>
           ))}
+          
+          <button
+            onClick={() => setShowHeatmap(!showHeatmap)}
+            className={cn(
+              "p-3 h-12 w-12 rounded-sm border backdrop-blur-md transition-all flex items-center justify-center group relative",
+              showHeatmap 
+                ? "bg-[#ff641d] border-[#ff641d] text-white" 
+                : "bg-black/60 border-white/10 text-white/40 hover:border-[#ff641d]/40"
+            )}
+            title="Mapa de Calor"
+          >
+            <Zap size={18} className={showHeatmap ? "animate-pulse" : ""} />
+            <div className="absolute left-full ml-4 px-3 py-1.5 bg-[#0b0c0d] text-white text-[8px] font-mono uppercase tracking-[0.3em] opacity-0 group-hover:opacity-100 pointer-events-none transition-all translate-x-[-10px] group-hover:translate-x-0 border border-white/5 whitespace-nowrap">
+              HEATMAP_OPS
+            </div>
+          </button>
         </div>
 
         {/* HUD: Right Metrics Dashboard */}
@@ -682,6 +739,7 @@ export default function AdventureMap() {
         >
           <LeafletZoomControl position="bottomright" />
           <MapController center={mapCenter} zoom={mapZoom} />
+          <HeatmapLayer points={initialPoints} active={showHeatmap} />
           
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
