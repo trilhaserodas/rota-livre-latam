@@ -84,9 +84,9 @@ export default function RadarIA() {
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 z-50 p-4 bg-[#ff641d] text-white rounded-full shadow-[0_0_20px_rgba(255,100,29,0.4)] border border-[#ff641d]/50 group"
+        className="fixed bottom-4 left-4 sm:bottom-6 sm:right-6 z-50 p-3.5 sm:p-4 bg-[#ff641d] text-white rounded-full shadow-[0_0_20px_rgba(255,100,29,0.4)] border border-[#ff641d]/50 group"
       >
-        <Zap size={24} className="group-hover:rotate-12 transition-transform" />
+        <Zap size={22} className="sm:w-6 sm:h-6 group-hover:rotate-12 transition-transform" />
         <span className="absolute -top-1 -right-1 flex h-3 w-3">
           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
           <span className="relative inline-flex rounded-full h-3 w-3 bg-white"></span>
@@ -97,10 +97,10 @@ export default function RadarIA() {
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            initial={{ opacity: 0, x: 100, scale: 0.9 }}
+            initial={{ opacity: 0, x: -100, scale: 0.9 }}
             animate={{ opacity: 1, x: 0, scale: 1 }}
-            exit={{ opacity: 0, x: 100, scale: 0.9 }}
-            className="fixed bottom-6 right-6 z-[60] w-[calc(100vw-32px)] sm:w-[400px] h-[600px] max-h-[calc(100vh-48px)] bg-[#0b0c0d] border border-white/10 rounded-2xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.8)] flex flex-col overflow-hidden backdrop-blur-xl"
+            exit={{ opacity: 0, x: -100, scale: 0.9 }}
+            className="fixed bottom-4 left-4 sm:bottom-6 sm:right-6 z-[60] w-[calc(100vw-32px)] sm:w-[400px] h-[500px] sm:h-[600px] max-h-[calc(100vh-48px)] bg-[#0b0c0d] border border-white/10 rounded-2xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.8)] flex flex-col overflow-hidden backdrop-blur-xl"
           >
             {/* Header */}
             <div className="p-4 border-b border-white/5 bg-white/[0.02] flex items-center justify-between">

@@ -825,53 +825,53 @@ export default function AdventureMap() {
       />
 
       {/* GPS Header HUD */}
-      <section className="pt-8 mb-8 border-l-2 border-[#ff641d] pl-6 relative">
+      <section className="pt-2 sm:pt-8 mb-4 sm:mb-8 border-l-2 border-[#ff641d] pl-4 sm:pl-6 relative">
         <div className="absolute top-0 -left-[5px] w-[9px] h-[9px] bg-[#ff641d] rotate-45" />
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 md:gap-6">
           <div>
-            <div className="text-[9px] font-mono tracking-[0.5em] text-[#ff641d] mb-3 uppercase flex items-center gap-2">
-              <CompassIcon size={12} className="animate-spin-slow" /> SYSTEM_STATUS: ONLINE_GEO_LINKED
+            <div className="text-[7px] sm:text-[9px] font-mono tracking-[0.3em] sm:tracking-[0.5em] text-[#ff641d] mb-1 sm:mb-3 uppercase flex items-center gap-2">
+              <CompassIcon size={10} className="sm:w-3 sm:h-3 animate-spin-slow" /> <span className="hidden sm:inline">SYSTEM_STATUS: </span>ONLINE_GEO_LINKED
             </div>
-            <h1 className="text-4xl sm:text-6xl font-display font-black uppercase tracking-tighter text-[#F8FAFC]">
+            <h1 className="text-2xl sm:text-6xl font-display font-black uppercase tracking-tighter text-[#F8FAFC]">
               TACTICAL<span className="text-[#ff641d]">.</span>ATLAS
             </h1>
           </div>
-          <div className="flex flex-col items-end">
-            <div className="text-[10px] font-mono text-white/20 uppercase tracking-widest text-right">
+          <div className="flex flex-col items-start md:items-end">
+            <div className="text-[8px] sm:text-[10px] font-mono text-white/20 uppercase tracking-widest">
               LAT: {mapCenter[0].toFixed(4)}° / LNG: {mapCenter[1].toFixed(4)}°
             </div>
-            <div className="flex items-center gap-2 text-[10px] font-mono text-[#ff641d]/60 uppercase tracking-widest">
-              <div className="w-2 h-2 rounded-full bg-[#ff641d] animate-pulse" /> SAT_ACTIVE_LINK_PRIMARY
+            <div className="flex items-center gap-2 text-[8px] sm:text-[10px] font-mono text-[#ff641d]/60 uppercase tracking-widest">
+              <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-[#ff641d] animate-pulse" /> SAT_ACTIVE_LINK
             </div>
           </div>
         </div>
       </section>
 
       {/* Main Map Interface */}
-      <div className="relative h-[calc(100vh-320px)] min-h-[600px] border border-white/5 rounded-sm overflow-hidden bg-[#0b0c0d]">
+      <div className="relative h-[calc(100vh-250px)] sm:h-[calc(100vh-320px)] min-h-[400px] sm:min-h-[600px] border border-white/5 rounded-sm overflow-hidden bg-[#0b0c0d]">
         {/* HUD: Top Search Bar */}
-        <div className="absolute top-6 left-6 right-6 z-[1000] pointer-events-none">
+        <div className="absolute top-4 sm:top-6 left-4 sm:left-6 right-4 sm:right-6 z-[1000] pointer-events-none">
           <div className="max-w-xl mx-auto flex gap-2 pointer-events-auto">
             <form onSubmit={handleSearch} className="flex-1 relative group">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-[#ff641d] transition-colors" size={16} />
+              <Search className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-[#ff641d] transition-colors" size={14} />
               <input 
                 type="text" 
-                placeholder="BUSCAR_COORD_OU_LOCAL..."
+                placeholder="BUSCAR_LOCAL..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-black/80 backdrop-blur-md border border-white/10 rounded-sm h-12 pl-12 pr-4 text-[10px] font-mono tracking-widest focus:outline-none focus:border-[#ff641d]/40 transition-all text-[#F8FAFC] shadow-2xl"
+                className="w-full bg-black/80 backdrop-blur-md border border-white/10 rounded-sm h-10 sm:h-12 pl-10 sm:pl-12 pr-4 text-[9px] sm:text-[10px] font-mono tracking-widest focus:outline-none focus:border-[#ff641d]/40 transition-all text-[#F8FAFC] shadow-2xl"
               />
               {isSearching && (
-                <div className="absolute right-4 top-1/2 -translate-y-1/2">
-                  <div className="w-4 h-4 border-2 border-[#ff641d]/20 border-t-[#ff641d] rounded-full animate-spin" />
+                <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                  <div className="w-3 h-3 border-2 border-[#ff641d]/20 border-t-[#ff641d] rounded-full animate-spin" />
                 </div>
               )}
             </form>
             <button 
               onClick={handleLocateUser}
-              className="w-12 h-12 bg-black/80 backdrop-blur-md border border-white/10 rounded-sm flex items-center justify-center text-[#ff641d] hover:bg-[#ff641d] hover:text-white transition-all shadow-2xl group"
+              className="w-10 h-10 sm:w-12 sm:h-12 bg-black/80 backdrop-blur-md border border-white/10 rounded-sm flex items-center justify-center text-[#ff641d] hover:bg-[#ff641d] hover:text-white transition-all shadow-2xl group"
             >
-              <LocateFixed size={20} className="group-active:scale-95 transition-transform" />
+              <LocateFixed size={18} className="group-active:scale-95 transition-transform" />
             </button>
           </div>
         </div>
@@ -1097,7 +1097,7 @@ export default function AdventureMap() {
               position={p} 
               icon={L.divIcon({
                 className: 'route-marker',
-                html: `<div class="w-3 h-3 bg-[#ff641d] border-2 border-white rounded-full ${i === 0 || i === routePoints.length -1 ? 'scale-125 ring-4 ring-[#ff641d]/20' : ''}"></div>`,
+                html: `<div class="w-2.5 h-2.5 sm:w-3 sm:h-3 bg-[#ff641d] border-2 border-white rounded-full ${i === 0 || i === routePoints.length -1 ? 'scale-125 ring-2 sm:ring-4 ring-[#ff641d]/20' : ''}"></div>`,
                 iconSize: [12, 12],
                 iconAnchor: [6, 6],
               })}
@@ -1110,10 +1110,10 @@ export default function AdventureMap() {
               className: 'remote-user-marker',
               html: `
                 <div class="relative">
-                  <div class="w-6 h-6 bg-green-500 rounded-full border-2 border-white shadow-[0_0_15px_rgba(34,197,94,0.6)] flex items-center justify-center">
-                    <Radio size={12} className="text-white animate-pulse" />
+                  <div class="w-5 h-5 sm:w-6 sm:h-6 bg-green-500 rounded-full border-2 border-white shadow-[0_0_15px_rgba(34,197,94,0.6)] flex items-center justify-center">
+                    <Radio size={10} className="sm:w-3 sm:h-3 text-white animate-pulse" />
                   </div>
-                  <div class="absolute -top-10 left-1/2 -translate-x-1/2 bg-black/80 backdrop-blur-sm border border-white/10 px-2 py-1 rounded text-[8px] font-mono text-white whitespace-nowrap">
+                  <div class="absolute -top-8 sm:-top-10 left-1/2 -translate-x-1/2 bg-black/80 backdrop-blur-sm border border-white/10 px-2 py-0.5 sm:py-1 rounded text-[7px] sm:text-[8px] font-mono text-white whitespace-nowrap">
                     LIVE: ${remoteUserName}
                   </div>
                 </div>
@@ -1122,7 +1122,7 @@ export default function AdventureMap() {
               iconAnchor: [12, 12],
             })}>
               <Popup>
-                <div className="p-2 text-center">
+                <div className="p-2 text-center text-[#ff641d]">
                   <div className="text-[10px] font-mono text-green-500 uppercase font-bold mb-1">RASTREAMENTO_ATIVO</div>
                   <div className="text-[8px] font-mono text-white/40">{remoteUserName} EM MOVIMENTO</div>
                 </div>
@@ -1133,9 +1133,9 @@ export default function AdventureMap() {
           {userLocation && (
             <Marker position={userLocation} icon={userLocationIcon()}>
               <Popup>
-                <div className="p-2 text-center">
+                <div className="p-2 text-center text-[#ff641d]">
                   <div className="text-[10px] font-mono text-[#ff641d] uppercase font-bold mb-1">SUA_POSIÇÃO</div>
-                  <div className="text-[8px] font-mono text-white/40">MARCADOR_TEMPO_REAL</div>
+                  <div className="text-[8px] font-mono text-white/40 uppercase">SINAL_LOCALIZAÇÃO_ATIVA</div>
                 </div>
               </Popup>
             </Marker>
@@ -1150,9 +1150,9 @@ export default function AdventureMap() {
                 icon={createCustomIcon(cat.color, p.category === 'danger' || p.category === 'hostel' || p.category === 'camping' || p.category === 'fuel' || p.category === 'bike_route' || p.category === 'moto_route' || p.category === 'overland')}
               >
                 <Popup className="custom-popup">
-                  <div className="p-1 min-w-[240px] bg-[#0b0c0d] text-[#F8FAFC]">
+                  <div className="p-1 min-w-[200px] sm:min-w-[240px] bg-[#0b0c0d] text-[#F8FAFC]">
                     {p.image ? (
-                      <div className="mb-4 -mx-1 -mt-1 h-36 overflow-hidden rounded-t-sm">
+                      <div className="mb-3 sm:mb-4 -mx-1 -mt-1 h-28 sm:h-36 overflow-hidden rounded-t-sm">
                         <img 
                           src={p.image} 
                           alt={p.name} 
@@ -1161,26 +1161,26 @@ export default function AdventureMap() {
                         />
                       </div>
                     ) : (
-                      <div className="h-2 bg-[#ff641d]/20 -mx-1 -mt-1 mb-4" />
+                      <div className="h-2 bg-[#ff641d]/20 -mx-1 -mt-1 mb-3 sm:mb-4" />
                     )}
                     
-                    <div className="px-3 pb-3">
-                      <div className="flex items-center gap-2 mb-2">
-                        <div className="p-1.5 rounded-sm bg-white/5 text-[#ff641d]">
-                          <cat.icon size={12} />
+                    <div className="px-2 sm:px-3 pb-2 sm:pb-3">
+                      <div className="flex items-center gap-2 mb-1 sm:mb-2 text-[#ff641d]">
+                        <div className="p-1 sm:p-1.5 rounded-sm bg-white/5 text-[#ff641d]">
+                          <cat.icon size={10} />
                         </div>
-                        <span className="text-[8px] font-mono text-white/20 uppercase tracking-[0.2em]">{p.category}</span>
+                        <span className="text-[7px] sm:text-[8px] font-mono text-white/20 uppercase tracking-[0.2em]">{p.category}</span>
                       </div>
                       
-                      <h4 className="font-display font-black uppercase text-sm mb-2 tracking-tighter leading-tight text-[#F8FAFC]">{p.name}</h4>
-                      <p className="text-[9px] text-white/40 mb-4 leading-relaxed font-mono uppercase">{p.description}</p>
+                      <h4 className="font-display font-black uppercase text-xs sm:text-sm mb-1 sm:mb-2 tracking-tighter leading-tight text-[#F8FAFC]">{p.name}</h4>
+                      <p className="text-[8px] sm:text-[9px] text-white/40 mb-3 sm:mb-4 leading-relaxed font-mono uppercase">{p.description}</p>
                       
-                      <div className="pt-3 border-t border-white/5 flex flex-col gap-3">
-                        <div className="text-[8px] font-mono text-white/20 uppercase tracking-widest flex items-center justify-between">
+                      <div className="pt-2 sm:pt-3 border-t border-white/5 flex flex-col gap-2 sm:gap-3">
+                        <div className="text-[7px] sm:text-[8px] font-mono text-white/20 uppercase tracking-widest flex items-center justify-between">
                           <span>COORDENADAS</span>
                           <span>{p.lat.toFixed(4)}, {p.lng.toFixed(4)}</span>
                         </div>
-                        <button className="w-full h-8 bg-[#ff641d] text-white text-[9px] font-mono font-bold uppercase tracking-[0.2em] hover:bg-white hover:text-[#ff641d] transition-all flex items-center justify-center gap-2">
+                        <button className="w-full h-7 sm:h-8 bg-[#ff641d] text-white text-[8px] sm:text-[9px] font-mono font-bold uppercase tracking-[0.2em] hover:bg-white hover:text-[#ff641d] transition-all flex items-center justify-center gap-2">
                           <Navigation size={10} /> LOCK_LOCATION
                         </button>
                       </div>
@@ -1193,6 +1193,77 @@ export default function AdventureMap() {
         </MapContainer>
       </div>
 
+      {/* Mobile Category Sidebar (Vertical equivalent, but placed below map) */}
+      <div className="lg:hidden mt-4 bg-black/40 border border-white/5 p-4 rounded-sm">
+        <div className="text-[8px] font-mono text-[#ff641d] uppercase tracking-[0.3em] mb-3">FILTROS_CATEGORIA</div>
+        <div className="flex overflow-x-auto gap-3 pb-2 no-scrollbar">
+          {categories.map(cat => (
+            <button
+              key={cat.id}
+              onClick={() => setSelectedCategory(cat.id)}
+              className={cn(
+                "flex-shrink-0 flex flex-col items-center justify-center w-14 h-14 rounded-sm border transition-all gap-1.5",
+                selectedCategory === cat.id 
+                  ? "bg-[#ff641d] border-[#ff641d] text-white shadow-[0_0_15px_rgba(255,100,29,0.3)]" 
+                  : "bg-white/5 border-white/10 text-white/40"
+              )}
+            >
+              <cat.icon size={16} />
+              <span className="text-[6px] font-mono uppercase tracking-widest truncate w-full text-center px-1">
+                {cat.name}
+              </span>
+            </button>
+          ))}
+          <button
+            onClick={() => setShowHeatmap(!showHeatmap)}
+            className={cn(
+              "flex-shrink-0 flex flex-col items-center justify-center w-14 h-14 rounded-sm border transition-all gap-1.5",
+              showHeatmap 
+                ? "bg-[#ff641d] border-[#ff641d] text-white shadow-[0_0_15px_rgba(255,100,29,0.3)]" 
+                : "bg-white/5 border-white/10 text-white/40"
+            )}
+          >
+            <Zap size={16} />
+            <span className="text-[6px] font-mono uppercase tracking-widest truncate w-full text-center px-1">
+              HEATMAP
+            </span>
+          </button>
+          <button
+            onClick={() => setIsTracing(!isTracing)}
+            className={cn(
+              "flex-shrink-0 flex flex-col items-center justify-center w-14 h-14 rounded-sm border transition-all gap-1.5",
+              isTracing 
+                ? "bg-[#ff641d] border-[#ff641d] text-white shadow-[0_0_15px_rgba(255,100,29,0.3)]" 
+                : "bg-white/5 border-white/10 text-white/40"
+            )}
+          >
+            <Ruler size={16} />
+            <span className="text-[6px] font-mono uppercase tracking-widest truncate w-full text-center px-1">
+              ROTA
+            </span>
+          </button>
+          <button
+            onClick={() => {
+              if (!auth.currentUser) {
+                alert("Necessário autenticação para compartilhar localização real.");
+                return;
+              }
+              setIsSharing(!isSharing);
+            }}
+            className={cn(
+              "flex-shrink-0 flex flex-col items-center justify-center w-14 h-14 rounded-sm border transition-all gap-1.5",
+              isSharing 
+                ? "bg-blue-500 border-blue-500 text-white shadow-[0_0_15px_rgba(59,130,246,0.3)]" 
+                : "bg-white/5 border-white/10 text-white/40"
+            )}
+          >
+            <Radio size={16} className={isSharing ? "animate-pulse" : ""} />
+            <span className="text-[6px] font-mono uppercase tracking-widest truncate w-full text-center px-1">
+              GPS_LIVE
+            </span>
+          </button>
+        </div>
+      </div>
       {/* Footer Tactical HUD */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
          <div className="dashboard-card p-6 border-white/5 bg-gradient-to-br from-white/[0.02] to-transparent">

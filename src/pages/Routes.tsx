@@ -1,13 +1,14 @@
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   ArrowRight, Compass, MapPin, Share2, Activity, Copy, Check, X, 
-  Twitter, Send, MessageCircle, Info, Heart, Bike, Triangle 
+  Twitter, Send, MessageCircle, Info, Heart, Bike, Triangle, Zap 
 } from 'lucide-react';
 import SEO from '@/src/components/SEO';
 import { Link } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import RouteWeather from '@/src/components/RouteWeather';
 import FavoriteToast from '@/src/components/FavoriteToast';
+import TacticalHUD from '@/src/components/TacticalHUD';
 
 const routes = [
   {
@@ -262,6 +263,11 @@ export default function Routes() {
         <p className="text-[#F8FAFC]/40 text-sm font-medium max-w-xl uppercase tracking-widest leading-loose">
           Mapas táticos para as travessias que moldam o espírito. Onde o asfalto termina e a liberdade começa.
         </p>
+      </section>
+
+      {/* Featured Tactical Analysis Section */}
+      <section className="mb-20">
+        <TacticalHUD />
       </section>
 
       {/* Tactic Filter HUD */}
