@@ -457,7 +457,121 @@ const initialPoints: LocationPoint[] = [
   { id: 'h10', name: 'Ponto Seguro P10', lat: -13.55, lng: -71.95, category: 'safe_point', description: 'POI' },
   { id: 'h11', name: 'Camping P11', lat: -22.9, lng: -68.2, category: 'camping', description: 'POI' },
   { id: 'h12', name: 'Oficina P12', lat: -23.0, lng: -68.3, category: 'repair', description: 'POI' },
-  { id: 'h13', name: 'Ponto Seguro P13', lat: -22.95, lng: -68.25, category: 'safe_point', description: 'POI' },
+  {
+    id: 'h13', name: 'Ponto Seguro P13', lat: -22.95, lng: -68.25, category: 'safe_point', description: 'POI' 
+  },
+  {
+    id: 'w-br-1',
+    name: 'Ponto de Apoio ao Ciclista Mairiporã (SP)',
+    lat: -23.4500,
+    lng: -46.6000,
+    category: 'water',
+    description: 'Trilha do Canal, perto do Rio Juquery, Mairiporã/SP vadebike'
+  },
+  {
+    id: 'w-br-2',
+    name: 'Rota das Águas Cicloturismo',
+    lat: -22.8500,
+    lng: -46.3167,
+    category: 'water',
+    description: 'Centro de Informações Turísticas, Extrema/MG extrematur'
+  },
+  {
+    id: 'w-br-3',
+    name: 'Legado das Águas',
+    lat: -24.2800,
+    lng: -46.9000,
+    category: 'water',
+    description: 'Rod. Régis Bittencourt km 348, Piraí/SP aliancabike'
+  },
+  {
+    id: 'w-br-4',
+    name: 'Circuito das Águas (Águas de Lindóia/SP)',
+    lat: -22.4764,
+    lng: -46.6342,
+    category: 'water',
+    description: 'Região de Campinas a Socorro/SP viagemeturismo.abril.com'
+  },
+  {
+    id: 'w-br-5',
+    name: 'Cachoeira do Buracão',
+    lat: -12.9833,
+    lng: -41.5167,
+    category: 'water',
+    description: 'Chapada Diamantina/BA'
+  },
+  {
+    id: 'w-br-6',
+    name: 'Poço Azul',
+    lat: -7.0833,
+    lng: -47.1667,
+    category: 'water',
+    description: 'Chapada das Mesas/MA'
+  },
+  {
+    id: 'w-br-7',
+    name: 'Caminho da Fé (Águas da Prata)',
+    lat: -21.9361,
+    lng: -46.7111,
+    category: 'water',
+    description: 'Pousadas, sinalização e fontes em cidades-piloto'
+  },
+  {
+    id: 'w-br-8',
+    name: 'Trilha Borbolight (Rio Acima/MG)',
+    lat: -20.0847,
+    lng: -43.7917,
+    category: 'water',
+    description: 'Cachoeiras cristalinas e riachos acessíveis'
+  },
+  {
+    id: 'w-br-9',
+    name: 'Cachoeira do Caracol (Canela/RS)',
+    lat: -29.3117,
+    lng: -50.8544,
+    category: 'water',
+    description: 'Gramado a Canela: Pontos de hidratação e paisagem'
+  },
+  {
+    id: 'w-br-10',
+    name: 'Vale Europeu (Pomerode/SC)',
+    lat: -26.7406,
+    lng: -49.1764,
+    category: 'water',
+    description: 'Hospedagens e águas em Pomerode/Nova Trento'
+  },
+  {
+    id: 'w-br-11',
+    name: 'Caminho do Vinho (PR)',
+    lat: -25.5347,
+    lng: -49.2039,
+    category: 'water',
+    description: 'Postos em vinícolas com água e descanso'
+  },
+  {
+    id: 'w-br-12',
+    name: 'Estrada Real (Ouro Preto)',
+    lat: -20.3853,
+    lng: -43.5035,
+    category: 'water',
+    description: 'Fontes históricas e refúgios em trechos'
+  },
+  {
+    id: 'w-br-13',
+    name: 'Jalapão (Mateiros)',
+    lat: -10.5481,
+    lng: -46.4250,
+    category: 'water',
+    description: 'Poços cristalinos e cachoeiras no caminho'
+  },
+  {
+    id: 'w-br-14',
+    name: 'Rota Bahia-Minas (Teófilo Otoni)',
+    lat: -17.8572,
+    lng: -41.5114,
+    category: 'water',
+    description: 'Infraestrutura de antigas ferrovias com águas'
+  },
 ];
 
 const categories = [
