@@ -1,8 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Compass, Coins, Clock, Map as MapIcon, Calculator, BookOpen, Menu, X, ArrowRight, Bell } from 'lucide-react';
+import { Compass, Coins, Clock, Map as MapIcon, Calculator, BookOpen, Menu, X, ArrowRight, Bell, LogIn, LogOut, Shield } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '@/src/lib/utils';
+import { auth } from '@/src/lib/firebase';
+import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut, User } from 'firebase/auth';
+
+const ADMIN_EMAIL = "trilhaserodas@gmail.com";
 
 const navItems = [
   { name: 'Início', path: '/', icon: Compass },
@@ -18,6 +22,8 @@ const navItems = [
 export default function Layout({ children }: { children: React.ReactNode }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const location = useLocation();
 
   useEffect(() => {
@@ -26,8 +32,33 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setUser(user);
+      setIsAdmin(user?.email === ADMIN_EMAIL);
+    });
+    return () => unsubscribe();
+  }, []);
+
   // Close menu on route change
   useEffect(() => setIsMenuOpen(false), [location.pathname]);
+
+  const handleLogin = async () => {
+    try {
+      const provider = new GoogleAuthProvider();
+      await signInWithPopup(auth, provider);
+    } catch (err) {
+      console.error("Erro no login:", err);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+    } catch (err) {
+      console.error("Erro no logout:", err);
+    }
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-[#0b0c0d] font-sans selection:bg-[#ff641d]/30">
@@ -52,7 +83,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           </Link>
 
           {/* Desktop Nav */}
-          <div className="hidden md:flex items-center gap-10 text-[10px] font-bold uppercase tracking-[0.2em] text-[#F8FAFC]/40">
+          <div className="hidden xl:flex items-center gap-8 text-[10px] font-bold uppercase tracking-[0.2em] text-[#F8FAFC]/40">
             {navItems.map((item) => (
               <Link
                 key={item.path}
@@ -71,15 +102,51 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 )}
               </Link>
             ))}
+            
+            <div className="h-4 w-[1px] bg-white/10 mx-2" />
+            
+            {isAdmin && (
+              <Link to="/admin" className="text-[#ff641d] hover:opacity-80 flex items-center gap-2">
+                <Shield size={12} />
+                ADMIN
+              </Link>
+            )}
+
+            {user ? (
+              <div className="flex items-center gap-4">
+                <div className="flex flex-col items-end leading-none">
+                  <span className="text-white/60 mb-0.5">{user.displayName?.split(' ')[0]}</span>
+                  <button onClick={handleLogout} className="text-[8px] text-white/20 hover:text-red-400 transition-colors">SAIR</button>
+                </div>
+                <div className="w-8 h-8 rounded-full border border-white/10 overflow-hidden">
+                  <img src={user.photoURL || ''} alt="" className="w-full h-full object-cover" />
+                </div>
+              </div>
+            ) : (
+              <button 
+                onClick={handleLogin}
+                className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-[#ff641d] text-white transition-all rounded-lg border border-white/10 group"
+              >
+                <LogIn size={12} className="group-hover:translate-x-0.5 transition-transform" />
+                ACESSO
+              </button>
+            )}
           </div>
 
-          <button
-            className="md:hidden text-[#F8FAFC]/60 hover:text-[#ff641d] p-2 transition-colors"
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-            aria-label="Toggle menu"
-          >
-            {isMenuOpen ? <X size={20} /> : <Menu size={20} />}
-          </button>
+          <div className="flex xl:hidden items-center gap-4">
+            {user && (
+              <div className="w-8 h-8 rounded-full border border-white/10 overflow-hidden">
+                <img src={user.photoURL || ''} alt="" className="w-full h-full object-cover" />
+              </div>
+            )}
+            <button
+              className="text-[#F8FAFC]/60 hover:text-[#ff641d] p-2 transition-colors"
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              aria-label="Toggle menu"
+            >
+              {isMenuOpen ? <X size={20} /> : <Menu size={20} />}
+            </button>
+          </div>
         </div>
       </nav>
 
@@ -91,9 +158,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 1.1 }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="fixed inset-0 z-40 bg-[#0b0c0d] flex flex-col justify-center px-12 md:hidden"
+            className="fixed inset-0 z-40 bg-[#0b0c0d] flex flex-col justify-center px-12 xl:hidden"
           >
-            <div className="flex flex-col gap-8">
+            <div className="flex flex-col gap-6">
               {navItems.map((item, idx) => (
                 <motion.div
                   key={item.path}
@@ -103,21 +170,57 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 >
                   <Link
                     to={item.path}
-                    className="text-4xl font-display font-black uppercase tracking-tighter text-[#F8FAFC] hover:text-[#ff641d] transition-colors"
+                    className={cn(
+                      "text-3xl font-display font-black uppercase tracking-tighter transition-colors",
+                      location.pathname === item.path ? "text-[#ff641d]" : "text-[#F8FAFC]"
+                    )}
                   >
                     {item.name}
                   </Link>
                 </motion.div>
               ))}
+              
+              {isAdmin && (
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.5 }}
+                >
+                  <Link to="/admin" className="text-3xl font-display font-black uppercase tracking-tighter text-[#ff641d]">
+                    ADMIN_MOD
+                  </Link>
+                </motion.div>
+              )}
             </div>
             
-            <div className="mt-20 pt-10 border-t border-white/5 flex flex-col gap-4">
-              <span className="text-[10px] uppercase font-mono tracking-[0.4em] text-[#ff641d]">Coordenadas</span>
-              <span className="text-sm font-mono text-[#F8FAFC]/40">-34.6037° S, -58.3816° W</span>
+            <div className="mt-16 pt-10 border-t border-white/5 flex flex-col gap-8">
+              {!user ? (
+                <button 
+                  onClick={handleLogin}
+                  className="w-fit flex items-center gap-4 px-8 py-4 bg-[#ff641d] text-white font-display font-black uppercase tracking-tighter rounded-xl"
+                >
+                  <LogIn size={20} />
+                  FAZER LOGIN GOOGLE
+                </button>
+              ) : (
+                <button 
+                  onClick={handleLogout}
+                  className="w-fit flex items-center gap-4 px-8 py-4 bg-white/5 text-white/40 font-display font-black uppercase tracking-tighter rounded-xl"
+                >
+                  <LogOut size={20} />
+                  DESCONECTAR
+                </button>
+              )}
+              
+              <div className="flex flex-col gap-2">
+                <span className="text-[10px] uppercase font-mono tracking-[0.4em] text-[#ff641d]">Localização_Atual</span>
+                <span className="text-xs font-mono text-[#F8FAFC]/40">-34.6037° S, -58.3816° W</span>
+              </div>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
+
 
       {/* Main Content */}
       <main className="flex-grow pt-24 topo-grid">
