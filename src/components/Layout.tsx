@@ -159,9 +159,25 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 1.1 }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="fixed inset-0 z-40 bg-[#0b0c0d] flex flex-col justify-center px-12 xl:hidden"
+            className="fixed inset-0 z-[60] bg-[#0b0c0d] flex flex-col px-8 md:px-12 xl:hidden overflow-y-auto"
           >
-            <div className="flex flex-col gap-6">
+            {/* Mobile Menu Header - Need a separate close button since z-index is higher */}
+            <div className="flex items-center justify-between py-8 mb-8 border-b border-white/5">
+              <Link to="/" className="flex items-center gap-2" onClick={() => setIsMenuOpen(false)}>
+                <div className="w-8 h-8 rounded-sm overflow-hidden">
+                  <img src="https://i.ibb.co/NnNRsj5N/Facion-site-rota-livre-hub.png" alt="Rota Livre Hub" className="w-full h-full object-cover" />
+                </div>
+                <span className="text-lg font-display font-black tracking-tighter uppercase text-[#F8FAFC]">Rota Livre</span>
+              </Link>
+              <button 
+                onClick={() => setIsMenuOpen(false)}
+                className="text-white/40 hover:text-[#ff641d] p-2"
+              >
+                <X size={24} />
+              </button>
+            </div>
+
+            <div className="flex flex-col gap-5">
               {navItems.map((item, idx) => (
                 <motion.div
                   key={item.path}
@@ -172,8 +188,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   <Link
                     to={item.path}
                     className={cn(
-                      "text-3xl font-display font-black uppercase tracking-tighter transition-colors",
-                      location.pathname === item.path ? "text-[#ff641d]" : "text-[#F8FAFC]"
+                      "text-4xl font-display font-black uppercase tracking-tighter transition-colors block",
+                      location.pathname === item.path ? "text-[#ff641d]" : "text-[#F8FAFC]/90"
                     )}
                   >
                     {item.name}
@@ -187,35 +203,46 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.5 }}
                 >
-                  <Link to="/admin" className="text-3xl font-display font-black uppercase tracking-tighter text-[#ff641d]">
+                  <Link to="/admin" className="text-4xl font-display font-black uppercase tracking-tighter text-[#ff641d]">
                     ADMIN_MOD
                   </Link>
                 </motion.div>
               )}
             </div>
             
-            <div className="mt-16 pt-10 border-t border-white/5 flex flex-col gap-8">
+            <div className="mt-12 mb-12 pt-8 border-t border-white/5 flex flex-col gap-6">
               {!user ? (
                 <button 
                   onClick={handleLogin}
-                  className="w-fit flex items-center gap-4 px-8 py-4 bg-[#ff641d] text-white font-display font-black uppercase tracking-tighter rounded-xl"
+                  className="w-full flex items-center justify-center gap-4 px-8 py-4 bg-[#ff641d] text-white font-display font-black uppercase tracking-tighter rounded-xl text-lg"
                 >
                   <LogIn size={20} />
-                  FAZER LOGIN GOOGLE
+                  LOGIN GOOGLE
                 </button>
               ) : (
-                <button 
-                  onClick={handleLogout}
-                  className="w-fit flex items-center gap-4 px-8 py-4 bg-white/5 text-white/40 font-display font-black uppercase tracking-tighter rounded-xl"
-                >
-                  <LogOut size={20} />
-                  DESCONECTAR
-                </button>
+                <div className="flex flex-col gap-4">
+                  <div className="flex items-center gap-4 bg-white/5 p-4 rounded-xl border border-white/5">
+                    <div className="w-12 h-12 rounded-full border border-white/10 overflow-hidden shrink-0">
+                      <img src={user.photoURL || ''} alt="" className="w-full h-full object-cover" />
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-white font-bold uppercase tracking-tight">{user.displayName}</span>
+                      <span className="text-[10px] text-white/30 font-mono tracking-widest">{user.email}</span>
+                    </div>
+                  </div>
+                  <button 
+                    onClick={handleLogout}
+                    className="w-full flex items-center justify-center gap-4 px-8 py-4 bg-white/5 text-white/40 hover:text-red-400 font-display font-black uppercase tracking-tighter rounded-xl border border-white/5 transition-colors"
+                  >
+                    <LogOut size={20} />
+                    DESCONECTAR
+                  </button>
+                </div>
               )}
               
-              <div className="flex flex-col gap-2">
-                <span className="text-[10px] uppercase font-mono tracking-[0.4em] text-[#ff641d]">Localização_Atual</span>
-                <span className="text-xs font-mono text-[#F8FAFC]/40">-34.6037° S, -58.3816° W</span>
+              <div className="flex flex-col gap-2 px-2">
+                <span className="text-[10px] uppercase font-mono tracking-[0.4em] text-[#ff641d] font-bold">Localização_Grid</span>
+                <span className="text-[10px] font-mono text-[#F8FAFC]/20 tracking-widest">-34.6037° S, -58.3816° W // SAT_ACTIVE</span>
               </div>
             </div>
           </motion.div>
