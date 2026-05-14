@@ -635,12 +635,31 @@ export default function AlertHub() {
             )}
 
             {activeCategory !== 'SEGURANÇA' && filteredAlerts.length === 0 && (
-              <div className="py-20 text-center border border-dashed border-white/5 rounded-3xl">
-                <div className="text-white/10 font-mono text-xs uppercase tracking-[0.4em]">
-                  Nenhum dado encontrado para os parâmetros atuais
+              <div className="py-20 text-center border border-dashed border-white/5 rounded-3xl bg-white/[0.01]">
+                <div className="text-white/10 font-mono text-[10px] uppercase tracking-[0.4em]">
+                  Nenhum dado tático encontrado para os parâmetros atuais
                 </div>
               </div>
             )}
+          </div>
+
+          {/* Community Tactical Feed */}
+          <div className="mt-12 pt-12 border-t border-white/5">
+            <div className="flex items-center justify-between mb-8 text-left">
+              <div>
+                <h2 className="text-2xl font-display font-black text-white uppercase tracking-tight">REPORTES DA COMUNIDADE</h2>
+                <p className="text-[10px] font-mono text-[#ff641d] uppercase tracking-[0.2em] mt-1">// Tactical_Crowdsourced_Intel</p>
+              </div>
+              <button 
+                onClick={() => setIsReportModalOpen(true)}
+                className="px-4 py-2 bg-[#ff641d]/10 hover:bg-[#ff641d] border border-[#ff641d]/20 text-[#ff641d] hover:text-white text-[9px] font-mono font-bold uppercase tracking-widest transition-all rounded-lg flex items-center gap-2 group"
+              >
+                <Zap size={12} className="group-hover:animate-pulse" />
+                Sinalizar Agora
+              </button>
+            </div>
+            
+            <CommunityReports />
           </div>
         </div>
 
@@ -714,9 +733,6 @@ export default function AlertHub() {
 
           <AdSense slot="sidebar_ad" />
 
-          {/* Community Reports Feed */}
-          <CommunityReports />
-
           {/* Contribution Prompt */}
           <div className="p-8 rounded-3xl bg-gradient-to-br from-[#ff641d]/20 to-transparent border border-[#ff641d]/10 relative overflow-hidden group">
             <div className="relative z-10">
@@ -735,6 +751,7 @@ export default function AlertHub() {
               <Globe size={120} />
             </div>
           </div>
+
 
           <ReportModal isOpen={isReportModalOpen} onClose={() => setIsReportModalOpen(false)} />
 
