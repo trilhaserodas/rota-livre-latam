@@ -6,6 +6,7 @@ import {
 import SEO from '@/src/components/SEO';
 import { Link } from 'react-router-dom';
 import { useState, useEffect } from 'react';
+import RouteWeather from '@/src/components/RouteWeather';
 
 const routes = [
   {
@@ -16,6 +17,8 @@ const routes = [
     types: ['bike', 'moto'],
     displayType: 'BIKE / MOTO',
     difficulty: 'MÉDIO_ALTO',
+    lat: -45.57,
+    lng: -72.07,
     description: 'A rota mais cênica da Patagônia Chilena, cruzando glaciares e florestas temperadas.',
     image: 'https://images.unsplash.com/photo-1518104593124-ac2e82a5eb9d?auto=format&fit=crop&q=80&w=800'
   },
@@ -27,6 +30,8 @@ const routes = [
     types: ['moto', 'overland'],
     displayType: 'MOTO / OVERLAND',
     difficulty: 'EXTREMO',
+    lat: -50.34,
+    lng: -72.27,
     description: 'De La Quiaca a Ushuaia, a lendária espinha dorsal dos Andes Argentinos.',
     image: 'https://images.unsplash.com/photo-1498677231914-50deb6ba421a?auto=format&fit=crop&q=80&w=800'
   },
@@ -38,6 +43,8 @@ const routes = [
     types: ['overland', 'moto'],
     displayType: 'OVERLAND / MOTO',
     difficulty: 'CRÍTICO',
+    lat: -3.20,
+    lng: -52.21,
     description: 'O maior desafio da América do Sul. Poeira, lama e a imensidão da floresta amazônica.',
     image: 'https://images.unsplash.com/photo-1502484433149-bc9197c3664c?auto=format&fit=crop&q=80&w=800'
   },
@@ -49,6 +56,8 @@ const routes = [
     types: ['bike'],
     displayType: 'MTB / TREKKING',
     difficulty: 'ALTO_ALTITUDE',
+    lat: -10.28,
+    lng: -76.92,
     description: 'Considerada uma das rotas de montanha mais bonitas do mundo em altas altitudes.',
     image: 'https://images.unsplash.com/photo-1544198305-e0d02447990c?auto=format&fit=crop&q=80&w=800'
   },
@@ -60,6 +69,8 @@ const routes = [
     types: ['bike'],
     displayType: 'MTB_EXPEDITION',
     difficulty: 'ALTO',
+    lat: -22.39,
+    lng: -44.97,
     description: 'Atravessa a Serra da Mantiqueira por trilhas e estradas de terra históricas.',
     image: 'https://images.unsplash.com/photo-1541625602330-2277a4c4b282?auto=format&fit=crop&q=80&w=800'
   },
@@ -71,6 +82,8 @@ const routes = [
     types: ['overland', 'moto', 'bike'],
     displayType: 'OVERLAND / ADVENTURE',
     difficulty: 'EXTREMO',
+    lat: -22.0,
+    lng: -67.5,
     description: 'Entre o Salar de Uyuni e San Pedro de Atacama. Deserto e lagunas coloridas a 4500m.',
     image: 'https://images.unsplash.com/photo-1463123081488-789f99849c48?auto=format&fit=crop&q=80&w=800'
   }
@@ -319,11 +332,13 @@ export default function Routes() {
                   </div>
                 </div>
 
-                <p className="text-[10px] text-white/30 leading-relaxed font-medium mb-8 flex-grow uppercase tracking-widest">
+                <p className="text-[10px] text-white/30 leading-relaxed font-medium mb-4 flex-grow uppercase tracking-widest">
                   "{route.description}"
                 </p>
 
-                <div className="flex gap-6 items-center">
+                <RouteWeather lat={route.lat} lng={route.lng} />
+
+                <div className="flex gap-6 items-center mt-6">
                   <span className="text-[8px] font-mono font-black uppercase tracking-[0.3em] text-[#ff641d]/40">GPX_AV_LINK</span>
                   <span className="text-[8px] font-mono font-black uppercase tracking-[0.3em] text-[#ff641d]/40">FIELD_NOTES</span>
                   <span className="text-[8px] font-mono font-black uppercase tracking-[0.3em] text-[#ff641d]/40">OPS_MAP</span>
