@@ -2,17 +2,19 @@ import { motion, AnimatePresence } from 'motion/react';
 import { 
   ArrowRight, Compass, MapPin, Share2, Activity, Copy, Check, X, 
   Twitter, Send, MessageCircle, Info, Heart, Bike, Triangle, Zap,
-  Upload, FileJson, AlertCircle, Loader2, Mail, Download, HardDrive, CloudOff
+  Upload, FileJson, AlertCircle, Loader2, Mail, Download, HardDrive, CloudOff,
+  Brain, ShieldAlert, Sparkles
 } from 'lucide-react';
 import SEO from '@/src/components/SEO';
 import { Link } from 'react-router-dom';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { cn } from '@/src/lib/utils';
 import { db, auth } from '@/src/lib/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import RouteWeather from '@/src/components/RouteWeather';
 import FavoriteToast from '@/src/components/FavoriteToast';
 import TacticalHUD from '@/src/components/TacticalHUD';
+import { analyzeRouteIntelligence, RouteAnalysisResult } from '@/src/services/geminiService';
 
 const routes = [
   {
@@ -363,6 +365,27 @@ export default function Routes() {
   const [isContributionOpen, setIsContributionOpen] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState('all');
   const [isOnline, setIsOnline] = useState(navigator.onLine);
+  
+  // AI Insights State
+  const [routeAIs, setRouteAIs] = useState<Record<string, RouteAnalysisResult>>({});
+  const [analyzingRouteId, setAnalyzingRouteId] = useState<string | null>(null);
+
+  const handleAIScan = async (routeId: string, routeName: string, country: string, vehicleType: string) => {
+    setAnalyzingRouteId(routeId);
+    try {
+      const result = await analyzeRouteIntelligence({
+        region: `${routeName}, ${country}`,
+        vehicle: vehicleType,
+        weather: "Sazonal local",
+        expeditionType: "EXPLORATION_MODE"
+      });
+      setRouteAIs(prev => ({ ...prev, [routeId]: result }));
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setAnalyzingRouteId(null);
+    }
+  };
   const [offlineRoutes, setOfflineRoutes] = useState<string[]>(() => {
     const saved = localStorage.getItem('offline_routes_data');
     if (!saved) return [];
@@ -494,6 +517,29 @@ export default function Routes() {
 
       {/* Featured Tactical Analysis Section */}
       <section className="mb-20">
+        <div className="flex items-center gap-4 mb-4">
+           <div className="flex items-center gap-2 px-3 py-1 bg-cyan-500/10 border border-cyan-500/30 rounded-full">
+              <Sparkles size={10} className="text-cyan-400 animate-pulse" />
+              <span className="text-[7px] font-mono font-black text-cyan-400 uppercase tracking-[0.3em]">AI_GLOBAL_NEWS_TICKER</span>
+           </div>
+           <div className="flex-1 h-[1px] bg-white/5 overflow-hidden">
+              <motion.div 
+                animate={{ x: [-1000, 1000] }}
+                transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+                className="whitespace-nowrap inline-block"
+              >
+                {[
+                  "ALERTA: VENTOS FORTES NA RUTA 40 (SETOR SUL)",
+                  "CONDIÇÕES CRÍTICAS NA BR-156: LAMA PESADA EM AMAPÁ",
+                  "NEVASCA PREVISTA EM PASO ROBALLOS NAS PRÓXIMAS 48H",
+                  "REABERTURA DE PONTO DE APOIO EM VILLA O'HIGGINS",
+                  "REGISTRO DE ALTA INCIDÊNCIA DE INSETOS NO JALAPÃO"
+                ].map((news, i) => (
+                  <span key={i} className="text-[8px] font-mono text-white/20 uppercase tracking-[0.4em] mx-20">{news}</span>
+                ))}
+              </motion.div>
+           </div>
+        </div>
         <TacticalHUD />
       </section>
 
@@ -672,7 +718,64 @@ export default function Routes() {
 
                 <RouteWeather lat={route.lat} lng={route.lng} />
 
-                <div className="flex gap-6 items-center mt-6">
+                {/* AI Insight Block */}
+                <div className="mt-8 pt-8 border-t border-white/5">
+                   <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-2">
+                         <Brain size={12} className="text-cyan-400" />
+                         <span className="text-[9px] font-mono font-black text-white/40 uppercase tracking-[0.2em]">INTELIGÊNCIA_TACTICA</span>
+                      </div>
+                      <button 
+                        onClick={() => handleAIScan(route.id, route.name, route.country, route.types[0])}
+                        disabled={analyzingRouteId === route.id}
+                        className={cn(
+                          "px-3 py-1 bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-[7px] font-mono font-bold uppercase tracking-widest hover:bg-cyan-500 hover:text-white transition-all rounded-xs",
+                          analyzingRouteId === route.id && "animate-pulse"
+                        )}
+                      >
+                         {analyzingRouteId === route.id ? "ANALYZING..." : routeAIs[route.id] ? "RE-SCAN" : "GERAR_INSIGHTS"}
+                      </button>
+                   </div>
+                   
+                   {routeAIs[route.id] ? (
+                      <motion.div 
+                        initial={{ opacity: 0, scale: 0.98 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="space-y-4"
+                      >
+                         <div className="p-3 bg-cyan-500/[0.03] border border-cyan-500/10 rounded-xs">
+                            <p className="text-[9px] text-cyan-400/80 font-mono leading-relaxed uppercase">
+                               "{routeAIs[route.id].summary}"
+                            </p>
+                         </div>
+                         <div className="grid grid-cols-2 gap-4">
+                            <div>
+                               <div className="text-[7px] font-mono text-white/20 uppercase tracking-widest mb-1">RISCO_MODELADO</div>
+                               <div className="text-[12px] font-mono font-black text-white">{routeAIs[route.id].riskLevel}%</div>
+                            </div>
+                            <div>
+                               <div className="text-[7px] font-mono text-white/20 uppercase tracking-widest mb-1">DIFICULDADE</div>
+                               <div className="text-[12px] font-mono font-black text-white">{routeAIs[route.id].difficulty}</div>
+                            </div>
+                         </div>
+                         <div className="space-y-1">
+                            <div className="text-[7px] font-mono text-[#ff641d] uppercase tracking-widest mb-2 flex items-center gap-1">
+                               <ShieldAlert size={8} /> ALERTA_OP_RELEVANTE
+                            </div>
+                            {routeAIs[route.id].alerts.slice(0, 2).map((alert, i) => (
+                               <div key={i} className="text-[8px] font-mono text-white/60 leading-tight uppercase">• {alert}</div>
+                            ))}
+                         </div>
+                      </motion.div>
+                   ) : (
+                      <div className="p-10 border border-dashed border-white/5 rounded-xs flex flex-col items-center justify-center gap-3 bg-white/[0.01]">
+                         <Activity size={16} className="text-white/5" />
+                         <span className="text-[8px] font-mono text-white/10 uppercase tracking-widest">SISTEMA_AGUARDANDO_COMANDO_INTEL</span>
+                      </div>
+                   )}
+                </div>
+
+                <div className="flex gap-6 items-center mt-8 pt-8 border-t border-white/5">
                   <span className="text-[8px] font-mono font-black uppercase tracking-[0.3em] text-[#ff641d]/40">GPX_AV_LINK</span>
                   <span className="text-[8px] font-mono font-black uppercase tracking-[0.3em] text-[#ff641d]/40">FIELD_NOTES</span>
                   <span className="text-[8px] font-mono font-black uppercase tracking-[0.3em] text-[#ff641d]/40">OPS_MAP</span>

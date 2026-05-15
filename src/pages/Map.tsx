@@ -11,7 +11,7 @@ import {
   Bike, Triangle, Plus, Minus, Crosshair, Fuel, Shield, 
   LocateFixed, Zap, Navigation, Globe, Navigation2, Compass as CompassIcon,
   Share2, Ruler, Trash2, Radio, UserPlus, Link as LinkIcon, Wind, Thermometer,
-  Cloud, Sun, CloudRain,
+  Cloud, Sun, CloudRain, Database,
   Mountain, Clock, Info, ShieldAlert, Wifi, Battery, Eye, Activity, Car, Truck
 } from 'lucide-react';
 import SEO from '@/src/components/SEO';
@@ -20,8 +20,9 @@ import { LocationPoint } from '@/src/types';
 import { db, auth } from '@/src/lib/firebase';
 import { doc, setDoc, onSnapshot, serverTimestamp, getDoc, updateDoc, deleteDoc, collection, query, where } from 'firebase/firestore';
 import { useSearchParams } from 'react-router-dom';
-import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
 import { motion, AnimatePresence } from 'motion/react';
+import { analyzeRouteIntelligence, RouteAnalysisResult } from '@/src/services/geminiService';
 
 interface WeatherData {
   temp: number;
@@ -932,10 +933,14 @@ function otherUserIcon(color: string = '#00d4ff') {
 function MapController({ center, zoom, bounds }: { center?: [number, number], zoom?: number, bounds?: L.LatLngBoundsExpression }) {
   const map = useMap();
   useEffect(() => {
-    if (bounds) {
-      map.flyToBounds(bounds, { padding: [50, 50], duration: 1.5 });
-    } else if (center) {
-      map.flyTo(center, zoom || map.getZoom(), { duration: 1.5 });
+    try {
+      if (bounds) {
+        map.flyToBounds(bounds, { padding: [50, 50], duration: 1.5 });
+      } else if (center && !isNaN(center[0]) && !isNaN(center[1])) {
+        map.flyTo(center, zoom || map.getZoom(), { duration: 1.5 });
+      }
+    } catch (err) {
+      console.error("Map perspective shift failed", err);
     }
   }, [center, zoom, bounds, map]);
   return null;
@@ -996,6 +1001,9 @@ export default function AdventureMap() {
   const [selectedPoint, setSelectedPoint] = useState<LocationPoint | null>(null);
   const [weatherData, setWeatherData] = useState<WeatherData | null>(null);
   const [isLoadingWeather, setIsLoadingWeather] = useState(false);
+  const [aiIntelligence, setAiIntelligence] = useState<RouteAnalysisResult | null>(null);
+  const [isAnalyzingAI, setIsAnalyzingAI] = useState(false);
+  const [showAIPanel, setShowAIPanel] = useState(false);
   
   // Routing State
   const [isTracing, setIsTracing] = useState(false);
@@ -1014,13 +1022,19 @@ export default function AdventureMap() {
   // Stats
   const totalDistance = useMemo(() => {
     if (routePoints.length < 2) return 0;
-    let dist = 0;
-    for (let i = 0; i < routePoints.length - 1; i++) {
-        const p1 = L.latLng(routePoints[i]);
-        const p2 = L.latLng(routePoints[i+1]);
-        dist += p1.distanceTo(p2);
+    try {
+      let dist = 0;
+      for (let i = 0; i < routePoints.length - 1; i++) {
+          const p1 = routePoints[i];
+          const p2 = routePoints[i+1];
+          if (!p1 || !p2 || isNaN(p1[0]) || isNaN(p1[1]) || isNaN(p2[0]) || isNaN(p2[1])) continue;
+          dist += L.latLng(p1).distanceTo(L.latLng(p2));
+      }
+      return dist / 1000; // km
+    } catch (e) {
+      console.error("Distance calc failed", e);
+      return 0;
     }
-    return dist / 1000; // km
   }, [routePoints]);
 
   const estimatedTime = useMemo(() => {
@@ -1033,10 +1047,17 @@ export default function AdventureMap() {
 
   const elevationData = useMemo(() => {
     if (routePoints.length === 0) return [];
-    return routePoints.map((_, i) => ({
-      name: i,
-      alt: 400 + Math.sin(i * 0.5) * 200 + Math.random() * 50
-    }));
+    // Decimate for performance and stability with Recharts
+    const maxPoints = 100;
+    const step = Math.max(1, Math.floor(routePoints.length / maxPoints));
+    const processed = [];
+    for (let i = 0; i < routePoints.length; i += step) {
+      processed.push({
+        name: i,
+        alt: 400 + Math.sin(i * 0.5) * 200 + Math.random() * 50
+      });
+    }
+    return processed;
   }, [routePoints]);
 
   // Geolocation Logic
@@ -1127,6 +1148,26 @@ export default function AdventureMap() {
 
   const isSignedIn = useMemo(() => !!auth.currentUser, [auth.currentUser]);
 
+  // AI Intelligence Logic
+  const handleAIAnalysis = async () => {
+    setIsAnalyzingAI(true);
+    setShowAIPanel(true);
+    
+    // Determine context for AI
+    const regionText = selectedPoint?.name || originQuery || destinationQuery || "Global Exploration";
+    const weatherText = weatherData ? `${weatherData.temp}°C, ${weatherData.description}` : "Condições atuais locais";
+    
+    const result = await analyzeRouteIntelligence({
+      region: regionText,
+      vehicle: transportMode,
+      weather: weatherText,
+      expeditionType: isExpeditionMode ? "CRITICAL_ADVENTURE" : "STANDARD_TRAVEL"
+    });
+    
+    setAiIntelligence(result);
+    setIsAnalyzingAI(false);
+  };
+
   // Weather Fetching
   const fetchWeather = useCallback(async (lat: number, lng: number) => {
     const apiKey = import.meta.env.VITE_WEATHER_API_KEY;
@@ -1184,26 +1225,34 @@ export default function AdventureMap() {
         const start = [parseFloat(dataA[0].lat), parseFloat(dataA[0].lon)] as [number, number];
         const end = [parseFloat(dataB[0].lat), parseFloat(dataB[0].lon)] as [number, number];
         
+        if (isNaN(start[0]) || isNaN(start[1]) || isNaN(end[0]) || isNaN(end[1])) {
+           throw new Error("Invalid coordinates returned from geocoding");
+        }
+
         // Try to get actual road route from OSRM
         try {
           const osrmRes = await fetch(`https://router.project-osrm.org/route/v1/driving/${start[1]},${start[0]};${end[1]},${end[0]}?overview=full&geometries=geojson`);
           const osrmData = await osrmRes.json();
           
-          if (osrmData.routes?.[0]) {
-            const coords = osrmData.routes[0].geometry.coordinates.map((c: any) => [c[1], c[0]]);
+          if (osrmData.routes?.[0]?.geometry?.coordinates) {
+            const coords = osrmData.routes[0].geometry.coordinates.map((c: any) => [c[1], c[0]] as [number, number]);
             setRoutePoints(coords);
-            setMapCenter(start);
-            setMapZoom(12);
+            try {
+              const bounds = L.latLngBounds(coords);
+              setMapBounds(bounds);
+            } catch (boundsErr) {
+              setMapCenter(start);
+              setMapZoom(12);
+            }
           } else {
             // Fallback to straight line
             setRoutePoints([start, end]);
-            setMapCenter(start);
-            setMapZoom(10);
+            setMapBounds(L.latLngBounds([start, end]));
           }
         } catch (err) {
           console.error("OSRM failed", err);
           setRoutePoints([start, end]);
-          setMapCenter(start);
+          setMapBounds(L.latLngBounds([start, end]));
         }
       }
     } catch (err) {
@@ -1306,6 +1355,159 @@ export default function AdventureMap() {
       </AnimatePresence>
 
       {/* --- SELECTED POINT INTEL PANEL --- */}
+      {/* --- AI TACTICAL INTELLIGENCE PANEL --- */}
+      <AnimatePresence>
+        {showAIPanel && (
+          <motion.div
+            initial={{ x: -400, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            exit={{ x: -400, opacity: 0 }}
+            className="fixed left-4 md:left-20 top-24 bottom-24 w-full max-w-[340px] bg-[#0b0c0d]/90 backdrop-blur-3xl border border-cyan-500/20 z-[2500] flex flex-col shadow-[0_0_60px_rgba(34,211,238,0.1)] pointer-events-auto overflow-hidden rounded-sm"
+          >
+             <div className="p-4 border-b border-white/5 flex items-center justify-between bg-cyan-500/[0.03]">
+                <div className="flex items-center gap-2">
+                   <div className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse shadow-[0_0_10px_#22d3ee]" />
+                   <span className="text-[10px] font-mono font-black text-cyan-400 tracking-[0.3em]">AI_OPERATIONAL_HUB</span>
+                </div>
+                <button 
+                  onClick={() => setShowAIPanel(false)}
+                  className="text-white/20 hover:text-white transition-colors"
+                >
+                   <Plus size={16} className="rotate-45" />
+                </button>
+             </div>
+
+             <div className="flex-1 overflow-y-auto no-scrollbar p-6">
+                {!aiIntelligence && isAnalyzingAI ? (
+                  <div className="h-full flex flex-col items-center justify-center gap-6">
+                     <div className="relative">
+                        <div className="w-16 h-16 border-2 border-cyan-500/20 rounded-full border-t-cyan-500 animate-spin" />
+                        <Activity className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-cyan-500 animate-pulse" size={24} />
+                     </div>
+                     <div className="text-center space-y-2">
+                        <div className="text-[10px] font-mono text-cyan-400 font-bold uppercase tracking-[0.3em] animate-pulse">SINCRO_DADOS_SATÉLITE...</div>
+                        <div className="text-[7px] font-mono text-white/20 uppercase tracking-widest">PROCESSANDO_MODELO_GEMINI_PRO</div>
+                     </div>
+                  </div>
+                ) : aiIntelligence && (
+                  <div className="space-y-8">
+                     {/* Summary Header */}
+                     <section>
+                        <div className="text-[8px] font-mono text-cyan-500/60 uppercase tracking-[0.2em] mb-2">STATUS_OPERACIONAL</div>
+                        <h2 className="text-xl font-display font-black text-white uppercase tracking-tighter leading-none mb-3">
+                           {aiIntelligence.difficulty}_RISK_PROTOCOL
+                        </h2>
+                        <div className="p-3 bg-white/[0.02] border border-white/5 rounded-xs">
+                           <p className="text-[10px] text-white/60 font-mono uppercase leading-relaxed italic">
+                              "{aiIntelligence.summary}"
+                           </p>
+                        </div>
+                     </section>
+
+                     {/* Intelligence Radar */}
+                     <section className="h-48 -mx-4">
+                        <div className="text-[7px] font-mono text-white/20 uppercase tracking-[0.3em] mb-4 text-center">RADAR_DE_DIFICULDADE</div>
+                        <ResponsiveContainer width="100%" height="100%">
+                          <RadarChart data={[
+                            { subject: 'TERRAIN', A: aiIntelligence.radarStats.terrain },
+                            { subject: 'ISOLATION', A: aiIntelligence.radarStats.isolation },
+                            { subject: 'WEATHER', A: aiIntelligence.radarStats.weather },
+                            { subject: 'TECH', A: aiIntelligence.radarStats.tech },
+                          ]}>
+                            <PolarGrid stroke="rgba(255,255,255,0.05)" />
+                            <PolarAngleAxis dataKey="subject" tick={{ fill: 'rgba(255,255,255,0.3)', fontSize: 7, fontWeight: 900 }} />
+                            <Radar
+                              name="Intel"
+                              dataKey="A"
+                              stroke="#22d3ee"
+                              fill="#22d3ee"
+                              fillOpacity={0.3}
+                            />
+                          </RadarChart>
+                        </ResponsiveContainer>
+                     </section>
+
+                     {/* Risk Level Meter */}
+                     <section className="space-y-2">
+                        <div className="flex justify-between items-end">
+                           <span className="text-[8px] font-mono text-white/20 uppercase tracking-widest">NÍVEL_DE_RISCO</span>
+                           <span className={cn(
+                             "text-[12px] font-mono font-black",
+                             aiIntelligence.riskLevel > 70 ? "text-red-500" : "text-cyan-400"
+                           )}>{aiIntelligence.riskLevel}%</span>
+                        </div>
+                        <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+                           <motion.div 
+                             initial={{ width: 0 }}
+                             animate={{ width: `${aiIntelligence.riskLevel}%` }}
+                             className={cn(
+                               "h-full transition-all duration-1000",
+                               aiIntelligence.riskLevel > 70 ? "bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)]" : "bg-cyan-500 shadow-[0_0_10px_rgba(34,211,238,0.5)]"
+                             )}
+                           />
+                        </div>
+                     </section>
+
+                     {/* Intelligent Alerts */}
+                     <section className="space-y-4">
+                        <div className="flex items-center gap-2">
+                           <ShieldAlert size={10} className="text-[#ff641d]" />
+                           <span className="text-[8px] font-mono text-white/20 uppercase tracking-[0.3em]">ALERTAS_INTELIGENTES</span>
+                        </div>
+                        <div className="space-y-2">
+                           {aiIntelligence.alerts.map((alert, i) => (
+                             <div key={i} className="flex gap-3 p-3 bg-red-500/5 border border-red-500/10 rounded-xs">
+                                <div className="w-1 h-auto bg-red-500" />
+                                <span className="text-[9px] font-mono text-white/80 leading-tight uppercase">{alert}</span>
+                             </div>
+                           ))}
+                        </div>
+                     </section>
+
+                     {/* Operational Conditions */}
+                     <section className="space-y-2">
+                        <div className="flex items-center gap-2">
+                           <Database size={10} className="text-cyan-400" />
+                           <span className="text-[8px] font-mono text-white/20 uppercase tracking-[0.3em]">CONDIÇÕES_OPERACIONAIS</span>
+                        </div>
+                        <div className="p-4 bg-white/[0.02] border border-white/5 rounded-xs">
+                           <p className="text-[10px] text-white/60 font-mono uppercase leading-relaxed">
+                              {aiIntelligence.operationalConditions}
+                           </p>
+                        </div>
+                     </section>
+
+                     {/* Recommended Gear */}
+                     <section className="space-y-3">
+                        <div className="flex items-center gap-2">
+                           <Hammer size={10} className="text-cyan-400" />
+                           <span className="text-[8px] font-mono text-white/20 uppercase tracking-[0.3em]">EQUIPAMENTOS_RECOMENDADOS</span>
+                        </div>
+                        <div className="grid grid-cols-1 gap-2">
+                           {aiIntelligence.equipment.map((item, i) => (
+                             <div key={i} className="px-3 py-2 bg-white/[0.03] border border-white/10 rounded-sm flex items-center justify-between group hover:border-cyan-500/30 transition-all">
+                                <span className="text-[8px] font-mono text-white/40 group-hover:text-cyan-400 transition-colors uppercase">{item}</span>
+                                <Plus size={8} className="text-white/10" />
+                             </div>
+                           ))}
+                        </div>
+                     </section>
+                  </div>
+                )}
+             </div>
+
+             {/* Footer Operational Status */}
+             <div className="p-4 bg-cyan-500/[0.02] border-t border-cyan-500/10 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                   <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
+                   <span className="text-[7px] font-mono text-white/20 uppercase tracking-widest">AI_LOGIC_ACTIVE</span>
+                </div>
+                <div className="text-[7px] font-mono text-white/20 uppercase tracking-widest">SYNC_TIME: {new Date().toLocaleTimeString()}</div>
+             </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <AnimatePresence>
         {selectedPoint && (
           <motion.div
@@ -1481,6 +1683,19 @@ export default function AdventureMap() {
 
           {/* Mode Controls Right */}
           <div className="flex gap-2 pointer-events-auto self-end md:self-auto">
+             <button 
+               onClick={handleAIAnalysis}
+               className={cn(
+                 "h-14 px-5 rounded-sm font-mono font-black text-[10px] uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-2 border shadow-[0_0_20px_rgba(34,211,238,0.2)] overflow-hidden relative group",
+                 showAIPanel 
+                   ? "bg-cyan-500 border-cyan-400 text-white" 
+                   : "bg-black/80 border-cyan-500/30 text-cyan-400/60 hover:border-cyan-400"
+               )}
+             >
+               <Activity size={14} className={isAnalyzingAI ? "animate-spin" : "animate-pulse"} /> 
+               <span>{isAnalyzingAI ? "ANALYZING..." : "INTELLIGENCE"}</span>
+             </button>
+
              <button 
                onClick={() => setIsExpeditionMode(!isExpeditionMode)}
                className={cn(
