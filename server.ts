@@ -1,7 +1,7 @@
 import express from "express";
 import path from "path";
 import { createServer as createViteServer } from "vite";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenAI } from "@google/genai";
 
 async function startServer() {
   const app = express();
@@ -16,13 +16,39 @@ async function startServer() {
       const apiKey = process.env.GEMINI_API_KEY;
 
       if (!apiKey) {
-        return res.status(500).json({ error: "GEMINI_API_KEY no configurado" });
+        console.error("Missing GEMINI_API_KEY");
+        return res.status(500).json({ error: "Chave API Gemini não encontrada no ambiente do servidor." });
       }
 
-      const genAI = new GoogleGenerativeAI(apiKey);
-      const model = genAI.getGenerativeModel({ 
-        model: "gemini-2.0-flash",
-        systemInstruction: `Você é o "RADAR IA", o assistente tático do Rota Livre Hub. 
+      console.log("Iniciando requisição para Gemini...");
+      const ai = new GoogleGenAI({
+        apiKey: apiKey,
+        httpOptions: {
+          headers: {
+            'User-Agent': 'aistudio-build',
+          }
+        }
+      });
+
+      // Prepare contents for generateContent (stateless approach)
+      const contents = [];
+      
+      // Add history if present
+      if (history && Array.isArray(history)) {
+        contents.push(...history);
+      }
+      
+      // Add current message
+      contents.push({
+        role: 'user',
+        parts: [{ text: message }]
+      });
+
+      const response = await ai.models.generateContent({
+        model: "gemini-flash-latest",
+        contents: contents,
+        config: {
+          systemInstruction: `Você é o "RADAR IA", o assistente tático do Rota Livre Hub. 
 Sua missão é auxiliar cicloviajantes e aventureiros na América Latina com informações precisas sobre:
 1. Logística de cicloviagem (rotas, equipamentos, acampamento).
 2. Protocolos de sobrevivência e segurança em climas extremos (frio, calor, altitude).
@@ -33,22 +59,33 @@ Seu tom é: Técnico, direto, prestativo e "High-Tech". Use uma linguagem que re
 
 Seja conciso mas detalhado no que importa. Sempre priorize a segurança do ciclista.
 Se perguntarem algo fora desses temas, tente gentilmente trazer de volta para a aventura, mas responda se for útil.
-Responda sempre em Português do Brasil.`
+Responda sempre em Português do Brasil.`,
+          temperature: 0.7,
+        }
       });
 
-      const chat = model.startChat({
-        history: history || [],
-      });
+      const text = response.text;
+      if (!text) {
+        throw new Error("O modelo Gemini retornou uma resposta sem texto.");
+      }
 
-      const result = await chat.sendMessage(message);
-      const response = await result.response;
-      const text = response.text();
-
+      console.log("Resposta da IA recebida com sucesso.");
       res.json({ text });
-    } catch (error) {
-      console.error("Chat Error:", error);
-      res.status(500).json({ error: "Erro ao processar mensagem" });
+    } catch (error: any) {
+      console.error("Chat Server Error:", error);
+      res.status(500).json({ 
+        error: "Erro no processamento da IA",
+        details: error.message || String(error)
+      });
     }
+  });
+
+  app.get("/api/health", (req, res) => {
+    res.json({ 
+      status: "ok", 
+      hasKey: !!process.env.GEMINI_API_KEY,
+      node: process.version
+    });
   });
 
   // Vite middleware for development

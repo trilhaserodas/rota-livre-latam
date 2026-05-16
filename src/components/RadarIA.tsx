@@ -65,14 +65,21 @@ export default function RadarIA() {
         }),
       });
 
-      if (!res.ok) throw new Error('Falha na resposta do servidor');
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.details || errorData.error || 'Falha na resposta do servidor');
+      }
       
       const data = await res.json();
       const responseText = data.text || "Erro na comunicação via satélite. Tente novamente.";
       setMessages(prev => [...prev, { role: 'assistant', content: responseText }]);
-    } catch (error) {
+    } catch (error: any) {
       console.error("AI Error:", error);
-      setMessages(prev => [...prev, { role: 'assistant', content: "ERRO_SISTEMA: Conexão instável. Verifique seu sinal e tente novamente." }]);
+      const errorMessage = error.message.includes('API_KEY_INVALID') || error.message.includes('GEMINI_API_KEY') 
+        ? "ERRO_SISTEMA: Chave de API não configurada corretamente. Verifique as configurações de Secrets."
+        : `ERRO_SISTEMA: ${error.message || "Conexão de satélite interrompida. Tente novamente."}`;
+      
+      setMessages(prev => [...prev, { role: 'assistant', content: errorMessage }]);
     } finally {
       setIsLoading(false);
     }
