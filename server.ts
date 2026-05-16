@@ -11,44 +11,47 @@ async function startServer() {
 
   // API Routes
   app.post("/api/chat", async (req, res) => {
-    try {
-      const { message, history } = req.body;
-      const apiKey = process.env.GEMINI_API_KEY;
+    const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+    
+    const { message, history } = req.body;
+    const apiKey = process.env.GEMINI_API_KEY;
 
-      if (!apiKey) {
-        console.error("Missing GEMINI_API_KEY");
-        return res.status(500).json({ error: "Chave API Gemini não encontrada no ambiente do servidor." });
-      }
+    if (!apiKey) {
+      console.error("Missing GEMINI_API_KEY");
+      return res.status(500).json({ error: "Chave API Gemini não encontrada no ambiente do servidor." });
+    }
 
-      console.log("Iniciando requisição para Gemini...");
-      const ai = new GoogleGenAI({
-        apiKey: apiKey,
-        httpOptions: {
-          headers: {
-            'User-Agent': 'aistudio-build',
-          }
+    const ai = new GoogleGenAI({
+      apiKey: apiKey,
+      httpOptions: {
+        headers: {
+          'User-Agent': 'aistudio-build',
         }
-      });
-
-      // Prepare contents for generateContent
-      const contents: any[] = [];
-      
-      // Add history if present
-      if (history && Array.isArray(history)) {
-        contents.push(...history);
       }
-      
-      // Add current message
-      contents.push({
-        role: 'user',
-        parts: [{ text: message }]
-      });
+    });
 
-      const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
-        contents: contents,
-        config: {
-          systemInstruction: `Você é o "RADAR IA", o assistente tático do Rota Livre Hub. 
+    const maxRetries = 3;
+    let retryCount = 0;
+
+    const executeChat = async (): Promise<any> => {
+      try {
+        console.log(`Iniciando tentativa ${retryCount + 1} para Gemini...`);
+        
+        // Prepare contents
+        const contents: any[] = [];
+        if (history && Array.isArray(history)) {
+          contents.push(...history);
+        }
+        contents.push({
+          role: 'user',
+          parts: [{ text: message }]
+        });
+
+        const response = await ai.models.generateContent({
+          model: "gemini-1.5-flash",
+          contents: contents,
+          config: {
+            systemInstruction: `Você é o "RADAR IA", o assistente tático do Rota Livre Hub. 
 Sua missão é auxiliar cicloviajantes e aventureiros na América Latina com informações precisas e atualizadas.
 
 DIRETRIZES DE PESQUISA (PROTOCOLO REDDIT/COMUNIDADE/GOOGLE):
@@ -66,12 +69,31 @@ Seu tom é: Técnico, direto, prestativo e "High-Tech". Use uma linguagem que re
 
 Seja conciso mas detalhado no que importa. Sempre priorize a segurança do ciclista.
 Responda sempre em Português do Brasil.`,
-          tools: [{ googleSearch: {} }],
-          temperature: 0.7,
-        }
-      });
+            tools: [{ googleSearch: {} }],
+            temperature: 0.7,
+          }
+        });
 
+        return response;
+      } catch (error: any) {
+        // Handle Rate Limit (429) or Overloaded (503)
+        const isRetryable = (error.status === 429 || error.status === 503 || error.message?.includes('429') || error.message?.includes('quota'));
+        
+        if (isRetryable && retryCount < maxRetries) {
+          retryCount++;
+          const waitTime = retryCount * 3000; // Exponential-ish backoff
+          console.log(`Radar IA em espera. Retentando em ${waitTime}ms (Tentativa ${retryCount}/${maxRetries})...`);
+          await delay(waitTime);
+          return executeChat();
+        }
+        throw error;
+      }
+    };
+
+    try {
+      const response = await executeChat();
       const text = response.text;
+      
       if (!text) {
         throw new Error("O modelo Gemini retornou uma resposta sem texto.");
       }
@@ -83,7 +105,7 @@ Responda sempre em Português do Brasil.`,
       });
     } catch (error: any) {
       console.error("Chat Server Error:", error);
-      res.status(500).json({ 
+      res.status(error.status || 500).json({ 
         error: "Erro no processamento da IA",
         details: error.message || String(error)
       });
