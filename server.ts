@@ -125,18 +125,27 @@ Responda sempre em Português do Brasil.`,
     const { lat, lon } = req.query;
     const apiKey = process.env.WEATHER_API_KEY;
 
+    console.log(`[WeatherAPI] Request for lat: ${lat}, lon: ${lon}`);
+
     if (!apiKey) {
+      console.error("[WeatherAPI] Missing API Key");
       return res.status(500).json({ error: "WEATHER_API_KEY non-existent." });
     }
 
     try {
+      // Use WeatherAPI.com instead of OpenWeatherMap as per user's specific mapping request
       const response = await fetch(
-        `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric&lang=pt_br`
+        `https://api.weatherapi.com/v1/current.json?key=${apiKey}&q=${lat},${lon}&lang=pt`
       );
+      
       if (!response.ok) {
-        return res.status(response.status).json({ error: "Failed to fetch from OpenWeatherMap" });
+        const errorText = await response.text();
+        console.error(`[WeatherAPI] API Error: ${response.status}`, errorText);
+        return res.status(response.status).json({ error: "Failed to fetch from WeatherAPI", details: errorText });
       }
+
       const data = await response.json();
+      console.log("[WeatherAPI] Success response received");
       res.json(data);
     } catch (error) {
       console.error("Weather Proxy Error:", error);

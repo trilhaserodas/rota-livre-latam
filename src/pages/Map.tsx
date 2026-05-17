@@ -1583,6 +1583,7 @@ export default function AdventureMap() {
 
   // Weather Fetching
   const fetchWeather = useCallback(async (lat: number, lng: number) => {
+    console.log(`[Frontend] Fetching weather for PIN coordinates: ${lat}, ${lng}`);
     setIsLoadingWeather(true);
     try {
       const response = await fetch(`/api/weather?lat=${lat}&lon=${lng}`);
@@ -1592,18 +1593,24 @@ export default function AdventureMap() {
       }
 
       const data = await response.json();
+      console.log("[Frontend] Weather API Raw Response:", data);
       
+      if (!data || !data.current) {
+        throw new Error('Invalid weather data structure from WeatherAPI');
+      }
+
       setWeatherData({
-        temp: Math.round(data.main.temp),
-        feelsLike: Math.round(data.main.feels_like),
-        description: data.weather[0].description,
-        humidity: data.main.humidity,
-        windSpeed: data.wind.speed,
-        icon: data.weather[0].icon
+        temp: Math.round(data.current.temp_c),
+        feelsLike: Math.round(data.current.feelslike_c),
+        description: data.current.condition.text || "CONDIÇÕES_N/A",
+        humidity: data.current.humidity,
+        windSpeed: data.current.wind_kph,
+        icon: data.current.condition.icon.startsWith('//') 
+          ? `https:${data.current.condition.icon}` 
+          : data.current.condition.icon
       });
     } catch (err) {
-      console.error("Error fetching weather:", err);
-      // Fallback but with actual error context if needed
+      console.error("[Frontend] Error fetching weather:", err);
       setWeatherData(null);
     } finally {
       setIsLoadingWeather(false);

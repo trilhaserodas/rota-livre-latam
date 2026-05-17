@@ -424,74 +424,80 @@ const PointPanelV2: React.FC<PointPanelV2Props> = ({
                        </div>
                     </div>
                     
-                    <div className="grid grid-cols-2 divide-y md:divide-y-0 md:grid-cols-4 divide-white/5 relative">
-                      {isLoadingWeather && (
-                        <div className="absolute inset-0 z-10 bg-black/40 backdrop-blur-[2px] flex items-center justify-center">
-                           <div className="flex items-center gap-2">
-                              <Activity size={12} className="text-[#ff641d] animate-spin" />
-                              <span className="text-[8px] font-mono text-white/60 uppercase tracking-[0.2em]">FETCHING_WEATHER_DATA...</span>
-                           </div>
+                      <div className="grid grid-cols-2 divide-y md:divide-y-0 md:grid-cols-4 divide-white/5 relative min-h-[100px]">
+                        {isLoadingWeather && (
+                          <div className="absolute inset-0 z-10 bg-black/80 backdrop-blur-[4px] flex items-center justify-center">
+                             <div className="flex flex-col items-center gap-2">
+                                <Activity size={18} className="text-[#ff641d] animate-spin" />
+                                <span className="text-[9px] font-mono text-[#ff641d] font-bold uppercase tracking-[0.2em]">BUSCANDO_DADOS_CLIMÁTICOS...</span>
+                             </div>
+                          </div>
+                        )}
+                        
+                        {/* Weather Condition */}
+                        <div className="p-4 flex flex-col items-center justify-center gap-3 group border-r border-white/5">
+                          <div className="relative">
+                            {weatherData ? (
+                              <img 
+                                src={weatherData.icon} 
+                                className="w-12 h-12 drop-shadow-[0_0_15px_rgba(255,100,29,0.5)] group-hover:scale-125 transition-transform" 
+                                alt="weather"
+                              />
+                            ) : (
+                              <Cloud size={24} className={cn("text-white/10", isLoadingWeather && "animate-pulse")} />
+                            )}
+                          </div>
+                          <div className="text-center">
+                            <span className="text-[12px] font-mono text-white font-black uppercase tracking-tight block leading-none truncate max-w-[100px]">
+                              {weatherData?.description || (isLoadingWeather ? "SYNC..." : "SINAL CLIMÁTICO INDISPONÍVEL")}
+                            </span>
+                            <span className="text-[9px] font-mono text-white/40 uppercase tracking-[0.2em] leading-none mt-1.5 font-bold group-hover:text-[#ff641d] transition-colors">CONDIÇÕES_ATM</span>
+                          </div>
                         </div>
-                      )}
-                      
-                      {/* Weather Condition */}
-                      <div className="p-4 flex flex-col items-center justify-center gap-2 group border-r border-white/5">
-                        <div className="relative">
-                          {weatherData ? (
-                            <img 
-                              src={`https://openweathermap.org/img/wn/${weatherData.icon}@4x.png`} 
-                              className="w-10 h-10 drop-shadow-[0_0_10px_rgba(255,100,29,0.4)] group-hover:scale-110 transition-transform" 
-                              alt="weather"
-                            />
-                          ) : (
-                            <Cloud size={20} className={cn("text-white/20", isLoadingWeather && "animate-pulse")} />
-                          )}
-                        </div>
-                        <div className="text-center">
-                          <span className="text-[9px] font-mono text-white/80 uppercase tracking-tighter block leading-none truncate max-w-[80px]">
-                            {weatherData?.description || (isLoadingWeather ? "SYNC..." : "N/A")}
-                          </span>
-                          <span className="text-[6px] font-mono text-white/20 uppercase tracking-widest leading-none">CONDIÇÕES_ATM</span>
-                        </div>
-                      </div>
 
-                      {/* Temperature */}
-                      <div className="p-4 flex flex-col items-center justify-center gap-1 group border-r border-white/5">
-                        <div className="text-2xl font-display font-black text-white flex items-start">
-                          {weatherData ? weatherData.temp : "--"}
-                          <span className="text-[12px] text-[#ff641d] mt-0.5 ml-0.5">°C</span>
+                        {/* Temperature */}
+                        <div className="p-4 flex flex-col items-center justify-center gap-1 group border-r border-white/5">
+                          <div className="text-3xl font-display font-black text-white flex items-start group-hover:scale-110 transition-transform">
+                            {weatherData ? weatherData.temp : "--"}
+                            <span className="text-[16px] text-[#ff641d] mt-1 ml-0.5">°C</span>
+                          </div>
+                          <div className="text-center">
+                            <span className="text-[9px] font-mono text-white/40 uppercase tracking-[0.2em] block mb-2 font-bold group-hover:text-[#ff641d] transition-colors">TEMPERATURA</span>
+                            <div className="flex items-center justify-center gap-1 px-2 py-0.5 bg-white/5 rounded-full">
+                               <Thermometer size={12} className="text-[#ff641d]/80" />
+                               <span className="text-[10px] font-mono text-white/90 font-black uppercase whitespace-nowrap">ST: {weatherData ? `${weatherData.feelsLike}°C` : "--"}</span>
+                            </div>
+                          </div>
                         </div>
-                        <div className="text-center">
-                          <span className="text-[6px] font-mono text-white/20 uppercase tracking-widest block mb-1">TEMPERATURA</span>
-                          <div className="flex items-center justify-center gap-1">
-                             <Thermometer size={8} className="text-[#ff641d]/40" />
-                             <span className="text-[8px] font-mono text-white/60 uppercase whitespace-nowrap">ST: {weatherData ? `${weatherData.feelsLike}°C` : "--"}</span>
+
+                        {/* Wind */}
+                        <div className="p-4 flex flex-col items-center justify-center gap-2 group border-r border-white/5">
+                          <Wind size={24} className="text-white/30 group-hover:text-[#ff641d] transition-colors group-hover:rotate-12" />
+                          <div className="text-center">
+                            <div className="flex items-baseline justify-center gap-1">
+                              <span className="text-[18px] font-mono font-black text-white leading-none">
+                                {weatherData ? Math.round(weatherData.windSpeed) : "--"}
+                              </span>
+                              <span className="text-[9px] font-black text-white/30 uppercase tracking-tighter">KM/H</span>
+                            </div>
+                            <span className="text-[9px] font-mono text-white/40 uppercase tracking-[0.2em] block leading-none mt-2 font-bold group-hover:text-[#ff641d] transition-colors">VENTOS_RAJADA</span>
+                          </div>
+                        </div>
+
+                        {/* Stats (Rain/Humid) */}
+                        <div className="p-4 flex flex-col items-center justify-center gap-2 group">
+                          <Droplets size={24} className="text-white/30 group-hover:text-blue-400 transition-colors group-hover:-translate-y-1" />
+                          <div className="text-center">
+                             <div className="flex items-baseline justify-center gap-1">
+                              <span className="text-[18px] font-mono font-black text-white leading-none">
+                                {weatherData ? weatherData.humidity : "--"}
+                              </span>
+                              <span className="text-[10px] font-black text-white/30 ml-0.5">%</span>
+                            </div>
+                            <span className="text-[9px] font-mono text-white/40 uppercase tracking-[0.2em] block leading-none mt-2 font-bold group-hover:text-blue-400 transition-colors">HUMIDADE_REL</span>
                           </div>
                         </div>
                       </div>
-
-                      {/* Wind */}
-                      <div className="p-4 flex flex-col items-center justify-center gap-2 group border-r border-white/5">
-                        <Wind size={20} className="text-white/20 group-hover:text-[#ff641d] transition-colors" />
-                        <div className="text-center">
-                          <span className="text-[12px] font-mono font-black text-white">
-                            {weatherData ? Math.round(weatherData.windSpeed * 3.6) : "--"} <span className="text-[7px] font-normal text-white/40 uppercase">KM/H</span>
-                          </span>
-                          <span className="text-[6px] font-mono text-white/20 uppercase tracking-widest block leading-none">VENTOS_RAJADA</span>
-                        </div>
-                      </div>
-
-                      {/* Stats (Rain/Humid) */}
-                      <div className="p-4 flex flex-col items-center justify-center gap-2 group">
-                        <Droplets size={20} className="text-white/20 group-hover:text-blue-400 transition-colors" />
-                        <div className="text-center">
-                          <span className="text-[12px] font-mono font-black text-white">
-                            {weatherData ? weatherData.humidity : "--"}<span className="text-[7px] text-white/40 ml-0.5">%</span>
-                          </span>
-                          <span className="text-[6px] font-mono text-white/20 uppercase tracking-widest block leading-none">HUMIDADE_REL</span>
-                        </div>
-                      </div>
-                    </div>
                   </div>
 
                   {/* 6. Operational Status HUD */}
