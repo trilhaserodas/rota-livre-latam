@@ -14,8 +14,9 @@ import {
   Share2, Ruler, Trash2, Radio, UserPlus, Link as LinkIcon, Wind, Thermometer,
   Cloud, Sun, CloudRain, Database, Heart, Cpu, Minimize2, Maximize2,
   Mountain, Clock, Info, ShieldAlert, Wifi, Battery, Eye, Activity, Car, Truck,
-  Map as MapIcon
+  Map as MapIcon, ChevronLeft, ChevronRight
 } from 'lucide-react';
+import PointPanelV2 from '@/src/components/PointPanelV2';
 import WeatherWidget from '@/src/components/WeatherWidget';
 import SEO from '@/src/components/SEO';
 import { cn } from '@/src/lib/utils';
@@ -24,7 +25,7 @@ import { db, auth } from '@/src/lib/firebase';
 import { doc, setDoc, onSnapshot, serverTimestamp, getDoc, updateDoc, deleteDoc, collection, query, where } from 'firebase/firestore';
 import { useSearchParams } from 'react-router-dom';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence, useDragControls } from 'motion/react';
 import { analyzeRouteIntelligence, RouteAnalysisResult } from '@/src/services/geminiService';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db as offlineDb, saveRouteOffline, removeRouteOffline, exportToGPX } from '@/src/services/offlineService';
@@ -1302,6 +1303,7 @@ export default function AdventureMap() {
   const [showAIPanel, setShowAIPanel] = useState(false);
   const [isBottomPanelMinimized, setIsBottomPanelMinimized] = useState(false);
   const [isPointDetailsMinimized, setIsPointDetailsMinimized] = useState(false);
+  const dragControls = useDragControls();
 
   useEffect(() => {
     if (selectedPoint) {
@@ -2523,25 +2525,11 @@ export default function AdventureMap() {
 
               {userLocation && (
                 <Marker position={userLocation} icon={userLocationIcon()}>
-                  <Popup className="custom-popup">
-                    <div className="p-3 bg-[#0b0c0d] text-center border border-white/5 min-w-[150px]">
-                      <div className="text-[9px] font-mono text-[#ff641d] font-black uppercase tracking-widest mb-1">VOCÊ (LOCALIZAÇÃO)</div>
-                      <div className="text-[7px] font-mono text-white/40 uppercase mb-3">{isSharing ? 'TRANSMITINDO_LIVE' : 'SINAL_GPS_LOCAL'}</div>
-                      <WeatherWidget lat={userLocation[0]} lng={userLocation[1]} />
-                    </div>
-                  </Popup>
                 </Marker>
               )}
 
               {otherSessions.map(session => (
                 <Marker key={session.id} position={[session.lat, session.lng]} icon={otherUserIcon()}>
-                  <Popup className="custom-popup">
-                    <div className="p-3 bg-[#0b0c0d] text-center border border-white/5 min-w-[150px]">
-                      <div className="text-[9px] font-mono text-blue-400 font-black uppercase tracking-widest mb-1">{session.userName.toUpperCase()}</div>
-                      <div className="text-[7px] font-mono text-white/40 uppercase mb-3">EXPLORER_LIVE_HUB</div>
-                      <WeatherWidget lat={session.lat} lng={session.lng} />
-                    </div>
-                  </Popup>
                 </Marker>
               ))}
 
@@ -2562,92 +2550,6 @@ export default function AdventureMap() {
                         <div className="text-[7px] font-mono text-[#ff641d] uppercase tracking-[0.2em]">{cat.name}</div>
                       </div>
                     </MapTooltip>
-                    <Popup className="custom-popup">
-                      <div className="p-0 min-w-[240px] bg-[#0b0c0d] overflow-hidden rounded-sm">
-                        {p.image && <img src={p.image} className="w-full h-32 object-cover grayscale hover:grayscale-0 transition-all duration-700" referrerPolicy="no-referrer" />}
-                        <div className="p-4">
-                          <div className="flex flex-wrap items-center gap-2 mb-3">
-                             <div className="p-1 px-2 border border-white/10 rounded-sm text-[#ff641d] text-[8px] font-bold uppercase tracking-widest flex items-center gap-1.5"><cat.icon size={10} /> {cat.name}</div>
-                             {p.operationalStatus && (
-                               <div className={cn(
-                                 "p-1 px-2 border rounded-sm text-[8px] font-bold uppercase tracking-widest",
-                                 p.operationalStatus === 'STABLE' ? "border-green-500/20 text-green-500" :
-                                 p.operationalStatus === 'WARNING' ? "border-yellow-500/20 text-yellow-500" :
-                                 "border-red-500/20 text-red-500"
-                               )}>
-                                 {p.operationalStatus}
-                               </div>
-                             )}
-                          </div>
-                          
-                          <h4 className="text-sm font-display font-black text-white uppercase tracking-tighter mb-1">{p.name}</h4>
-                          <p className="text-[9px] text-white/40 uppercase font-mono leading-relaxed mb-4">{p.description}</p>
-                          
-                          {(p.address || p.phone || p.website || p.rating || p.hours || p.type) && (
-                            <div className="space-y-1.5 mb-4 border-t border-white/5 pt-3">
-                              {p.address && <div className="text-[9px] text-white/50 flex items-start gap-2"><span>📍</span> {p.address}</div>}
-                              {p.rating && <div className="text-[9px] text-white/50 flex items-start gap-2"><span>⭐</span> {p.rating}</div>}
-                              {p.type && <div className="text-[9px] text-white/50 flex items-start gap-2"><span>🏷️</span> {p.type}</div>}
-                              {p.hours && <div className="text-[9px] text-white/50 flex items-start gap-2"><span>🕐</span> {p.hours}</div>}
-                              {p.price && <div className="text-[9px] text-white/50 flex items-start gap-2"><span>💰</span> {p.price}</div>}
-                              {p.phone && <div className="text-[9px] text-white/50 flex items-start gap-2"><span>📞</span> {p.phone}</div>}
-                              {p.website && (
-                                <div className="text-[9px] text-[#ff641d] flex items-start gap-2">
-                                  <span>🌐</span> 
-                                  <a href={p.website} target="_blank" rel="noopener noreferrer" className="hover:underline break-all">
-                                    {p.website.replace('https://', '').replace('www.', '')}
-                                  </a>
-                                </div>
-                              )}
-                            </div>
-                          )}
-
-                          {p.images && p.images.length > 1 && (
-                            <div className="grid grid-cols-4 gap-1 mb-4">
-                              {p.images.slice(1, 5).map((img, idx) => (
-                                <img 
-                                  key={idx} 
-                                  src={img} 
-                                  className="w-full h-10 object-cover border border-white/5 grayscale hover:grayscale-0 cursor-pointer transition-all" 
-                                  referrerPolicy="no-referrer"
-                                  onClick={(e) => {
-                                    const target = e.target as HTMLImageElement;
-                                    const mainImg = target.closest('.custom-popup')?.querySelector('img:first-child') as HTMLImageElement;
-                                    if (mainImg) mainImg.src = target.src;
-                                  }}
-                                />
-                              ))}
-                            </div>
-                          )}
-                          
-                          <WeatherWidget lat={p.lat} lng={p.lng} />
-                          
-                          <div className="grid grid-cols-2 gap-4 mb-4 border-t border-white/5 pt-4">
-                             {p.isolationLevel && (
-                               <div className="flex flex-col gap-1">
-                                 <span className="text-[7px] font-mono text-white/20 uppercase tracking-widest">ISOLAMENTO</span>
-                                 <span className={cn(
-                                   "text-[10px] font-mono font-black",
-                                   p.isolationLevel === 'LOW' ? "text-green-500" :
-                                   p.isolationLevel === 'MEDIUM' ? "text-yellow-500" :
-                                   "text-red-500"
-                                 )}>{p.isolationLevel}</span>
-                               </div>
-                             )}
-                             {p.nextSupportDist && (
-                               <div className="flex flex-col gap-1">
-                                 <span className="text-[7px] font-mono text-white/20 uppercase tracking-widest">PRÓXIMO_SUPORTE</span>
-                                 <span className="text-[10px] font-mono font-black text-white">{p.nextSupportDist}</span>
-                               </div>
-                             )}
-                          </div>
-
-                          <button className="w-full h-8 bg-white/5 border border-white/10 text-white/60 text-[8px] font-mono font-bold uppercase tracking-widest hover:bg-[#ff641d] hover:text-white transition-all flex items-center justify-center gap-2">
-                            <ArrowUpRight size={12} /> TRAÇAR_DESTINO
-                          </button>
-                        </div>
-                      </div>
-                    </Popup>
                   </Marker>
                 );
               })}
@@ -2882,221 +2784,22 @@ export default function AdventureMap() {
         )}
       </AnimatePresence>
 
-      <AnimatePresence>
-        {selectedPoint && (
-          <motion.div
-            initial={{ y: 100, opacity: 0, scale: 0.95 }}
-            animate={{ 
-              y: isPointDetailsMinimized ? (window.innerWidth < 768 ? '85vh' : 'calc(100vh - 120px)') : 0, 
-              opacity: 1, 
-              scale: 1,
-              x: window.innerWidth < 768 ? '-50%' : 0
-            }}
-            exit={{ y: 100, opacity: 0, scale: 0.95 }}
-            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className={cn(
-              "fixed z-[2500] bg-[#0b0c0d]/95 backdrop-blur-3xl border border-white/10 flex flex-col shadow-[0_0_80px_rgba(0,0,0,0.9)] pointer-events-auto overflow-hidden",
-              "bottom-0 left-1/2 -translate-x-1/2 w-[92%] max-h-[85vh] mb-4 rounded-xl", // Mobile default
-              "md:bottom-auto md:top-24 md:right-8 md:left-auto md:translate-x-0 md:w-[360px] md:max-h-[75vh] md:mb-0 md:rounded-lg" // Desktop override
-            )}
-          >
-             {/* Header */}
-             <div className="p-4 border-b border-white/5 flex items-center justify-between bg-white/[0.03]">
-                <div className="flex items-center gap-3">
-                   <div className="w-2 h-2 bg-[#ff641d] rounded-full animate-pulse shadow-[0_0_10px_#ff641d]" />
-                   <span className="text-[10px] font-mono font-black text-white/50 tracking-[0.3em] uppercase">
-                     {isPointDetailsMinimized ? "JANELA_MINIMIZADA" : "RELATÓRIO_DE_INTELIGÊNCIA"}
-                   </span>
-                </div>
-                <div className="flex items-center gap-1">
-                   <button 
-                     onClick={() => setIsPointDetailsMinimized(!isPointDetailsMinimized)}
-                     className="p-2 text-white/30 hover:text-white transition-colors"
-                   >
-                     {isPointDetailsMinimized ? <Maximize2 size={14} /> : <Minimize2 size={14} />}
-                   </button>
-                   <button 
-                     onClick={() => {
-                        setSelectedPoint(null);
-                        setIsPointDetailsMinimized(false);
-                     }}
-                     className="p-2 text-white/30 hover:text-red-500 transition-colors"
-                   >
-                     <Plus size={18} className="rotate-45" />
-                   </button>
-                </div>
-             </div>
-
-             {!isPointDetailsMinimized && (
-               <>
-                 <div className="flex-1 overflow-y-auto no-scrollbar">
-                    {/* Enhanced Photo Gallery */}
-                    <div className="relative group">
-                       {selectedPoint.images && selectedPoint.images.length > 0 ? (
-                         <div className="flex overflow-x-auto snap-x snap-mandatory no-scrollbar bg-black/40 h-56">
-                            {selectedPoint.images.map((img, idx) => (
-                               <div key={idx} className="flex-none w-full h-full snap-start relative group/img">
-                                  <img 
-                                    src={img} 
-                                    className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-700" 
-                                    referrerPolicy="no-referrer"
-                                    alt={`Gallery ${idx}`}
-                                  />
-                                  <div className="absolute bottom-4 right-4 bg-black/60 backdrop-blur-md px-2 py-1 border border-white/10 rounded-xs text-[8px] font-mono text-white/60">
-                                     {idx + 1} / {selectedPoint.images?.length}
-                                  </div>
-                               </div>
-                            ))}
-                         </div>
-                       ) : selectedPoint.image ? (
-                         <div className="h-56">
-                            <img 
-                              src={selectedPoint.image} 
-                              className="w-full h-full object-cover grayscale transition-all duration-700 border border-white/5" 
-                              referrerPolicy="no-referrer" 
-                            />
-                         </div>
-                       ) : (
-                         <div className="w-full h-48 bg-white/5 border border-white/10 flex items-center justify-center">
-                            <CompassIcon size={32} className="text-white/5 animate-spin-slow" />
-                         </div>
-                       )}
-                       
-                       {selectedPoint.images && selectedPoint.images.length > 1 && (
-                         <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1 z-10">
-                            {selectedPoint.images.map((_, i) => (
-                               <div key={i} className="w-1 h-1 rounded-full bg-white/20" />
-                            ))}
-                         </div>
-                       )}
-                       
-                       <div className="absolute top-4 left-4 p-1 px-2 bg-black/80 text-[#ff641d] text-[7px] font-mono font-black border border-[#ff641d]/20 uppercase tracking-[0.2em] backdrop-blur-sm">S-INTEL_CAPTURED</div>
-                    </div>
-
-                    <div className="p-6 space-y-6">
-                       <div>
-                          <div className="flex items-center gap-2 mb-2">
-                             <span className="text-[8px] font-mono text-[#ff641d] font-bold uppercase tracking-[0.3em]">{selectedPoint.category}</span>
-                             <div className="h-[1px] flex-1 bg-white/5" />
-                          </div>
-
-                          <h2 className="text-2xl font-display font-black text-white uppercase tracking-tighter mb-4 leading-none">{selectedPoint.name}</h2>
-                          
-                          {selectedPoint.address && (
-                            <div className="flex items-start gap-2 mb-4 text-white/40">
-                               <MapPin size={10} className="mt-0.5 text-[#ff641d]" />
-                               <span className="text-[9px] font-mono uppercase leading-tight">{selectedPoint.address}</span>
-                            </div>
-                          )}
-
-                          <p className="text-[11px] text-white/50 font-mono uppercase leading-relaxed border-l-2 border-[#ff641d] pl-4 bg-white/5 py-3 rounded-r-sm">
-                            {selectedPoint.description}
-                          </p>
-                       </div>
-
-                       {/* Real-time Weather HUD */}
-                       {(weatherData || isLoadingWeather) && (
-                         <div className="p-4 bg-[#ff641d]/5 border border-[#ff641d]/10 rounded-sm">
-                            <div className="flex items-center gap-2 mb-4">
-                               <Cloud size={10} className="text-[#ff641d]" />
-                               <span className="text-[7px] font-mono text-white/30 uppercase tracking-[0.3em]">CONTEXTO_AMBIENTAL</span>
-                            </div>
-                            {isLoadingWeather ? (
-                              <div className="flex items-center gap-4 animate-pulse">
-                                 <div className="w-10 h-10 rounded-full bg-white/5" />
-                                 <div className="space-y-2">
-                                    <div className="w-16 h-5 bg-white/5 rounded-sm" />
-                                    <div className="w-24 h-2 bg-white/5 rounded-sm" />
-                                 </div>
-                              </div>
-                            ) : weatherData && (
-                              <div className="flex items-center gap-5">
-                                 <div className="text-3xl font-display font-black text-white">{weatherData.temp}°C</div>
-                                 <div className="flex-1">
-                                    <div className="text-[9px] font-mono text-[#ff641d] font-bold uppercase tracking-widest leading-none mb-1">{weatherData.description}</div>
-                                    <div className="flex items-center gap-4">
-                                       <div className="flex items-center gap-1.5">
-                                          <Wind size={10} className="text-white/20" />
-                                          <span className="text-[9px] font-mono text-white/40">{weatherData.windSpeed}KM/H</span>
-                                       </div>
-                                       <div className="flex items-center gap-1.5">
-                                          <Droplets size={10} className="text-blue-500/50" />
-                                          <span className="text-[9px] font-mono text-white/40">{weatherData.humidity}%</span>
-                                       </div>
-                                    </div>
-                                 </div>
-                                 <img 
-                                   src={`https://openweathermap.org/img/wn/${weatherData.icon}@2x.png`} 
-                                   className="w-12 h-12 brightness-125" 
-                                   alt="weather"
-                                 />
-                              </div>
-                            )}
-                         </div>
-                       )}
-
-                       <div className="grid grid-cols-2 gap-4">
-                          <OperationalMetric 
-                            label="ISOLAMENTO" 
-                            value={selectedPoint.isolationLevel || "NENHUM"} 
-                            icon={Mountain} 
-                            color={selectedPoint.isolationLevel === 'CRITICAL' ? "text-red-500" : "text-white/40"} 
-                          />
-                          <OperationalMetric 
-                            label="STATUS" 
-                            value={selectedPoint.operationalStatus || "ONLINE"} 
-                            icon={ShieldCheck} 
-                            color={selectedPoint.operationalStatus === 'WARNING' ? "text-yellow-500" : "text-green-500"} 
-                          />
-                       </div>
-
-                       <div className="grid grid-cols-2 gap-4">
-                          <OperationalMetric label="LAT_NODE" value={selectedPoint.lat.toFixed(6)} icon={Activity} />
-                          <OperationalMetric label="LNG_NODE" value={selectedPoint.lng.toFixed(6)} icon={Activity} />
-                       </div>
-
-                       {selectedPoint.phone && (
-                          <div className="flex flex-col gap-1">
-                             <span className="text-[7px] font-mono text-white/20 uppercase tracking-widest">LINHA_DIRETA</span>
-                             <div className="text-[10px] font-mono text-[#ff641d] font-black">{selectedPoint.phone}</div>
-                          </div>
-                       )}
-                    </div>
-                 </div>
-
-                 <div className="p-4 bg-white/[0.03] border-t border-white/5">
-                    <button 
-                      onClick={() => {
-                        setRoutePoints(p => [...p, [selectedPoint.lat, selectedPoint.lng]]);
-                        setSelectedPoint(null);
-                        setIsPointDetailsMinimized(false);
-                      }}
-                      className="w-full h-14 bg-[#ff641d] text-white text-[10px] font-mono font-black uppercase tracking-widest hover:bg-white hover:text-[#ff641d] transition-all flex items-center justify-center gap-4 shadow-[0_10px_30px_rgba(255,100,29,0.3)] rounded-sm group"
-                    >
-                       <Navigation2 size={18} className="group-hover:rotate-45 transition-transform" /> 
-                       VINCULAR_AO_PLANO_DE_VOO
-                    </button>
-                 </div>
-               </>
-             )}
-
-             {isPointDetailsMinimized && (
-                <div 
-                  className="p-4 flex items-center justify-between cursor-pointer hover:bg-white/[0.02] transition-colors"
-                  onClick={() => setIsPointDetailsMinimized(false)}
-                >
-                   <div className="flex flex-col">
-                      <span className="text-[12px] font-display font-black text-white uppercase tracking-tight">{selectedPoint.name}</span>
-                      <span className="text-[8px] font-mono text-[#ff641d] uppercase tracking-widest">{selectedPoint.category}</span>
-                   </div>
-                   <div className="text-[10px] font-mono text-white/40">LAT: {selectedPoint.lat.toFixed(4)}</div>
-                </div>
-             )}
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* --- HUD OVERLAYS --- */}
+      <PointPanelV2 
+        point={selectedPoint}
+        onClose={() => {
+          setSelectedPoint(null);
+          setIsPointDetailsMinimized(false);
+        }}
+        isMinimized={isPointDetailsMinimized}
+        onToggleMinimize={() => setIsPointDetailsMinimized(!isPointDetailsMinimized)}
+        weatherData={weatherData}
+        onIntegrateRoute={(point) => {
+          setRoutePoints(p => [...p, [point.lat, point.lng]]);
+          setSelectedPoint(null);
+          setIsPointDetailsMinimized(false);
+        }}
+      />
+      {/* HUD OVERLAYS */}
 
       {/* Left Sidebar HUD (Categories - PC ONLY) */}
       <div className="hidden lg:flex absolute left-6 top-1/2 -translate-y-1/2 z-[2000] flex-col gap-2 pointer-events-auto">
