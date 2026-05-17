@@ -1952,7 +1952,7 @@ export default function AdventureMap() {
     }
   };
 
-  const [activeTab, setActiveTab] = useState<'explore' | 'expedition' | 'routing'>('explore');
+  const [activeTab, setActiveTab] = useState<'explore' | 'saved' | 'expedition' | 'routing'>('explore');
 
   useEffect(() => {
     if (selectedPreDefinedRoute) {
@@ -2087,6 +2087,7 @@ export default function AdventureMap() {
          <div className="flex border-b border-white/5 bg-black/40">
             {[
               { id: 'explore', label: 'EXPLORAR', icon: Search },
+              { id: 'saved', label: 'SALVOS', icon: Heart },
               { id: 'expedition', label: 'EXPEDIÇÃO', icon: Zap, disabled: !selectedPreDefinedRoute },
               { id: 'routing', label: 'TRAÇAR', icon: Navigation }
             ].map(tab => (
@@ -2134,44 +2135,6 @@ export default function AdventureMap() {
                        <div className="space-y-4">
                           <div className="flex items-center justify-between">
                              <span className="text-[9px] font-mono font-black text-white/20 tracking-[0.3em] uppercase">REFINAMENTO_TÁTICO</span>
-                           </div>
-
-                           {/* Mobile Toggles & Categories in Sidebar */}
-                           <div className="lg:hidden space-y-4 pb-2 border-b border-white/5">
-                              <div className="grid grid-cols-2 gap-2">
-                                 <button 
-                                   onClick={handleAIAnalysis}
-                                   className={cn(
-                                     "h-10 px-3 border rounded-xs font-mono font-black text-[9px] flex items-center justify-center gap-2 transition-all",
-                                     showAIPanel? "bg-cyan-500 border-cyan-400 text-white shadow-[0_0_15px_rgba(6,182,212,0.3)]" : "bg-white/5 border-white/10 text-white/40"
-                                   )}
-                                 >
-                                   <Activity size={12} className={isAnalyzingAI ? "animate-spin" : ""} /> AI_INTEL
-                                 </button>
-                                 <button 
-                                   onClick={() => setIsExpeditionMode(!isExpeditionMode)}
-                                   className={cn(
-                                     "h-10 px-3 border rounded-xs font-mono font-black text-[9px] flex items-center justify-center gap-2 transition-all",
-                                     isExpeditionMode ? "bg-[#ff641d] border-[#ff641d] text-white shadow-[0_0_15px_rgba(255,100,29,0.3)]" : "bg-white/5 border-white/10 text-white/40"
-                                   )}
-                                 >
-                                   <Zap size={12} className={isExpeditionMode ? "animate-pulse" : ""} /> LIVE_NAV
-                                 </button>
-                              </div>
-                              <div className="flex overflow-x-auto no-scrollbar gap-2">
-                                 {categories.map(cat => (
-                                   <button
-                                     key={cat.id}
-                                     onClick={() => setSelectedCategory(cat.id)}
-                                     className={cn(
-                                       "h-10 px-4 border rounded-xs font-mono font-black text-[9px] flex items-center gap-2 whitespace-nowrap transition-all shrink-0",
-                                       selectedCategory === cat.id ? "bg-[#ff641d] border-[#ff641d] text-white" : "bg-white/5 border-white/10 text-white/40"
-                                     )}
-                                   >
-                                     <cat.icon size={12} /> {cat.name}
-                                   </button>
-                                 ))}
-                              </div>
                            </div>
 
                            <div className="hidden lg:flex items-center justify-between">
@@ -2389,6 +2352,86 @@ export default function AdventureMap() {
                     </div>
                  </motion.div>
                )}
+
+               {activeTab === 'saved' && (
+                  <motion.div 
+                    key="saved"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 20 }}
+                    className="flex-1 flex flex-col overflow-hidden"
+                  >
+                    <div className="p-4 border-b border-white/5 bg-[#ff641d]/5 flex items-center justify-between">
+                       <span className="text-[9px] font-mono font-black text-[#ff641d] tracking-[0.3em] uppercase">ROTAS_MEMORIZADAS</span>
+                       <Heart size={14} className="text-[#ff641d]" />
+                    </div>
+                    
+                    <div className="flex-1 overflow-y-auto no-scrollbar pb-10">
+                      {/* Favoritos (Remote) */}
+                      <div className="p-4 bg-white/[0.02] border-b border-white/5">
+                        <span className="text-[7px] font-mono text-white/20 uppercase tracking-[0.4em] mb-4 block">NUVEM_SYNC</span>
+                        <div className="space-y-4">
+                           {preDefinedRoutes.filter(r => savedRouteIds.includes(r.id)).map(route => (
+                              <button
+                                key={`saved-${route.id}`}
+                                onClick={() => selectRoute(route)}
+                                className="w-full bg-white/[0.03] border border-white/5 p-4 rounded-sm flex flex-col gap-2 hover:border-[#ff641d]/40 transition-all text-left"
+                              >
+                                 <div className="flex justify-between items-center">
+                                    <span className="text-[10px] font-mono font-black text-white uppercase">{route.name}</span>
+                                    <button 
+                                      onClick={(e) => { e.stopPropagation(); toggleFavoriteRoute(route); }}
+                                      className="text-red-500"
+                                    >
+                                       <Heart size={12} fill="currentColor" />
+                                    </button>
+                                 </div>
+                                 <span className="text-[8px] font-mono text-white/40 uppercase tracking-widest">{route.country}</span>
+                              </button>
+                           ))}
+                           {savedRouteIds.length === 0 && (
+                             <div className="py-10 text-center opacity-20">
+                                <span className="text-[8px] font-mono uppercase tracking-widest">NENHUMA_ROTA_SALVA_NA_NUVEM</span>
+                             </div>
+                           )}
+                        </div>
+                      </div>
+
+                      {/* Offline (Local) */}
+                      <div className="p-4">
+                        <span className="text-[7px] font-mono text-green-500 uppercase tracking-[0.4em] mb-4 block">MEMÓRIA_LÓGICA_LOCAL</span>
+                        <div className="space-y-4">
+                           {offlineRoutes.map(route => (
+                              <button
+                                key={`offline-tab-${route.id}`}
+                                onClick={() => selectRoute(route as any)}
+                                className="w-full bg-green-500/5 border border-green-500/20 p-4 rounded-sm flex flex-col gap-2 hover:border-green-500 transition-all text-left"
+                              >
+                                 <div className="flex justify-between items-center">
+                                    <div className="flex items-center gap-2">
+                                       <Wifi size={10} className="text-green-500" />
+                                       <span className="text-[10px] font-mono font-black text-white uppercase">{route.name}</span>
+                                    </div>
+                                    <button 
+                                      onClick={(e) => { e.stopPropagation(); handleRemoveOfflineRoute(e, route.id); }}
+                                      className="text-white/20 hover:text-red-500 transition-colors"
+                                    >
+                                       <Trash2 size={12} />
+                                    </button>
+                                 </div>
+                                 <span className="text-[8px] font-mono text-white/40 uppercase tracking-widest">{route.country}</span>
+                              </button>
+                           ))}
+                           {offlineRoutes.length === 0 && (
+                             <div className="py-10 text-center opacity-20">
+                                <span className="text-[8px] font-mono uppercase tracking-widest">ARMAZENAMENTO_VAZIO</span>
+                             </div>
+                           )}
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
 
                {activeTab === 'expedition' && selectedPreDefinedRoute && (
                   <motion.div 
@@ -3028,29 +3071,37 @@ export default function AdventureMap() {
       />
       {/* HUD OVERLAYS */}
 
-      {/* Left Sidebar HUD (Categories - PC ONLY) */}
-      <div className="hidden lg:flex absolute left-6 top-1/2 -translate-y-1/2 z-[2000] flex-col gap-2 pointer-events-auto">
-         <div className="bg-black/60 backdrop-blur-xl border border-white/10 p-2 rounded-sm mb-2">
-            <Filter size={14} className="text-[#ff641d] mx-auto" />
+      {/* Left Sidebar HUD (Categories - Universal) */}
+      <div className="absolute left-4 lg:left-6 top-[20%] lg:top-1/2 -translate-y-1/2 z-[2000] flex flex-col gap-1.5 pointer-events-auto">
+         <div className="bg-black/60 backdrop-blur-xl border border-white/10 p-2 rounded-xs mb-2 shadow-2xl">
+            <Filter size={14} className="text-[#ff641d] mx-auto animate-pulse" />
          </div>
-         {categories.map(cat => (
-           <button
-             key={cat.id}
-             onClick={() => setSelectedCategory(cat.id)}
-             className={cn(
-               "w-12 h-12 rounded-sm border backdrop-blur-md transition-all flex items-center justify-center group relative",
-               selectedCategory === cat.id 
-                 ? "bg-[#ff641d] border-[#ff641d] text-white shadow-[0_0_15px_rgba(255,100,29,0.4)]" 
-                 : "bg-black/60 border-white/10 text-white/20 hover:border-[#ff641d]/40"
-             )}
-             title={cat.name}
-           >
-             <cat.icon size={18} />
-             <div className="absolute left-full ml-2 px-2 py-1 bg-black/80 border border-white/10 text-white text-[8px] font-mono whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity">
-                {cat.name.toUpperCase()}
-             </div>
-           </button>
-         ))}
+         <div className="flex flex-col gap-1.5 max-h-[60vh] overflow-y-auto no-scrollbar py-2">
+            {categories.map(cat => (
+              <button
+                key={cat.id}
+                onClick={() => setSelectedCategory(cat.id)}
+                className={cn(
+                  "w-10 h-10 lg:w-12 lg:h-12 rounded-xs border backdrop-blur-md transition-all flex items-center justify-center group relative shrink-0",
+                  selectedCategory === cat.id 
+                    ? "bg-[#ff641d] border-[#ff641d] text-white shadow-[0_0_20px_rgba(255,100,29,0.5)] z-10" 
+                    : "bg-black/80 border-white/10 text-white/20 hover:border-[#ff641d]/40"
+                )}
+                title={cat.name}
+              >
+                <cat.icon size={16} />
+                <div className="absolute left-full ml-3 px-2 py-1 bg-black/90 border border-white/10 text-white text-[8px] font-mono whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-all translate-x-[-10px] group-hover:translate-x-0 z-50">
+                    {cat.name.toUpperCase()}
+                </div>
+                {selectedCategory === cat.id && (
+                   <motion.div 
+                     layoutId="cat-indicator"
+                     className="absolute -left-1 top-2 bottom-2 w-1 bg-white rounded-full"
+                   />
+                )}
+              </button>
+            ))}
+         </div>
       </div>
 
       {/* Top Header Control Panel - Simplified for Mobile */}
@@ -3702,41 +3753,7 @@ export default function AdventureMap() {
         </div>
       </div>
 
-      {/* Responsive Categories Bar - REMOVED on Mobile as it is now in the sidebar */}
-      <AnimatePresence>
-        <motion.div 
-          initial={{ y: 100, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          exit={{ y: 100, opacity: 0 }}
-          className="lg:hidden hidden absolute bottom-6 left-1/2 -translate-x-1/2 w-full max-w-4xl px-4 z-[2000] pointer-events-none"
-        >
-          <div className="w-full pointer-events-auto bg-black/90 backdrop-blur-xl border border-white/10 rounded-sm p-4 shadow-[0_-10px_40px_rgba(0,0,0,0.5)] overflow-hidden">
-             <div className="flex items-center gap-3 mb-2 border-b border-white/5 pb-2">
-                <Filter size={10} className="text-[#ff641d]" />
-                <span className="text-[8px] font-mono text-white/40 uppercase tracking-[0.3em]">CATEGORIAS_DE_SUPORTE</span>
-             </div>
-             <div className="w-full overflow-x-auto no-scrollbar">
-               <div className="flex gap-2 min-w-max pb-1">
-                 {categories.map(cat => (
-                   <button
-                     key={cat.id}
-                     onClick={() => setSelectedCategory(cat.id)}
-                     className={cn(
-                       "h-10 px-4 rounded-sm border backdrop-blur-md transition-all flex items-center gap-2 group whitespace-nowrap",
-                       selectedCategory === cat.id 
-                         ? "bg-[#ff641d] border-[#ff641d] text-white shadow-[0_0_15px_rgba(255,100,29,0.3)]" 
-                         : "bg-white/[0.03] border-white/5 text-white/40 hover:border-[#ff641d]/40"
-                     )}
-                   >
-                     <cat.icon size={14} className={cn(selectedCategory === cat.id ? "text-white" : "text-[#ff641d]")} />
-                     <span className="text-[9px] font-mono font-bold uppercase tracking-widest">{cat.name}</span>
-                   </button>
-                 ))}
-               </div>
-             </div>
-          </div>
-        </motion.div>
-      </AnimatePresence>
+      {/* Responsive Categories Bar - REMOVED */}
 
       {/* Right Action Stack (Vertical controls) - Repositioned for Mobile to bottom-right */}
       <div className="absolute right-4 bottom-4 lg:top-1/2 lg:-translate-y-1/2 z-[2000] flex flex-col gap-2 pointer-events-auto">
