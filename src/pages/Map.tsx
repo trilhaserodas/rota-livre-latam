@@ -14,7 +14,7 @@ import {
   Share2, Ruler, Trash2, Radio, UserPlus, Link as LinkIcon, Wind, Thermometer,
   Cloud, Sun, CloudRain, Database, Heart, Cpu, Minimize2, Maximize2,
   Mountain, Clock, Info, ShieldAlert, Wifi, Battery, Eye, Activity, Car, Truck,
-  Map as MapIcon, ChevronLeft, ChevronRight
+  Map as MapIcon, ChevronLeft, ChevronRight, X, Menu
 } from 'lucide-react';
 import PointPanelV2 from '@/src/components/PointPanelV2';
 import WeatherWidget from '@/src/components/WeatherWidget';
@@ -1446,6 +1446,7 @@ export default function AdventureMap() {
   const [showAIPanel, setShowAIPanel] = useState(false);
   const [isBottomPanelMinimized, setIsBottomPanelMinimized] = useState(false);
   const [isPointDetailsMinimized, setIsPointDetailsMinimized] = useState(false);
+  const [showSidebarMobile, setShowSidebarMobile] = useState(false);
   const dragControls = useDragControls();
 
   useEffect(() => {
@@ -2093,8 +2094,33 @@ export default function AdventureMap() {
     <div className="h-screen bg-[#0b0c0d] flex flex-col lg:flex-row overflow-hidden isolate relative">
       <SEO title="Tactical GPS Explorer — Atlas do Aventureiro" description="Sistema de navegação tática para expedições independentes." />
       
+      {/* Mobile Sidebar Overlay */}
+      <AnimatePresence>
+        {showSidebarMobile && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setShowSidebarMobile(false)}
+            className="lg:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-[4500]"
+          />
+        )}
+      </AnimatePresence>
+
       {/* --- TACTICAL SIDEBAR (CONSOLIDATED) --- */}
-      <aside className="w-full h-1/2 lg:h-full lg:w-[420px] flex-shrink-0 flex flex-col bg-[#0b0c0d] z-[5000] border-r border-white/10 relative shadow-[20px_0_60px_rgba(0,0,0,0.8)] overflow-hidden">
+      <aside className={cn(
+         "w-full h-full lg:h-full lg:w-[420px] flex-shrink-0 flex flex-col bg-[#0b0c0d] z-[5000] border-r border-white/10 relative shadow-[20px_0_60px_rgba(0,0,0,0.8)] overflow-hidden transition-all duration-300",
+         "fixed lg:static top-0 right-0",
+         !showSidebarMobile && "translate-x-full lg:translate-x-0 hidden lg:flex",
+         showSidebarMobile && "translate-x-0 flex"
+      )}>
+         {/* Close Button Mobile */}
+         <button 
+           onClick={() => setShowSidebarMobile(false)}
+           className="lg:hidden absolute top-6 right-6 z-[60] p-2 bg-white/5 border border-white/10 text-white/40 hover:text-white rounded-sm"
+         >
+            <X size={20} />
+         </button>
 
          {/* Brand Section */}
          <div className="p-6 border-b border-white/5 flex flex-col gap-1 bg-gradient-to-br from-black to-[#ff641d]/10">
@@ -3671,7 +3697,7 @@ export default function AdventureMap() {
              <motion.div 
                initial={{ opacity: 0, y: -20 }}
                animate={{ opacity: 1, y: 0 }}
-               className="flex flex-col gap-3 pointer-events-auto max-w-full"
+               className="hidden lg:flex flex-col gap-3 pointer-events-auto max-w-full"
              >
                 <div className="flex flex-wrap justify-center gap-4 md:gap-6 bg-black/80 backdrop-blur-xl border border-white/10 p-3 md:p-4 rounded-sm shadow-2xl relative overflow-hidden">
                    {/* Scanline pattern for tech vibe */}
@@ -3754,7 +3780,16 @@ export default function AdventureMap() {
       {/* Responsive Categories Bar - REMOVED */}
 
       {/* Right Action Stack (Vertical controls) - Repositioned for Mobile to bottom-right */}
-      <div className="absolute right-4 bottom-4 lg:top-1/2 lg:-translate-y-1/2 z-[2000] flex flex-col gap-2 pointer-events-auto">
+      <div className="absolute right-4 bottom-4 lg:top-1/2 lg:-translate-y-1/2 z-[4000] flex flex-col gap-2 pointer-events-auto">
+         {/* Tactical Mobile Menu Trigger */}
+         <button 
+           onClick={() => setShowSidebarMobile(true)}
+           className="lg:hidden w-10 h-10 bg-black/80 border border-[#ff641d]/50 text-[#ff641d] rounded-sm transition-all shadow-xl flex items-center justify-center animate-pulse"
+           title="MENU TÁTICO"
+         >
+            <Menu size={18} />
+         </button>
+
          <button 
            onClick={handleAIAnalysis}
            className={cn(
