@@ -29,6 +29,7 @@ import { Link } from 'react-router-dom';
 import Layout from '../components/Layout';
 
 const REGIONS = [
+  { id: 'curitiba', name: 'Curitiba', country: 'Brasil', lat: -25.43, lng: -49.27, sub: 'Capital_Paranaense' },
   { id: 'sp', name: 'São Paulo', country: 'Brasil', lat: -23.55, lng: -46.63, sub: 'Metrópole_Sudeste' },
   { id: 'floripa', name: 'Florianópolis', country: 'Brasil', lat: -27.59, lng: -48.54, sub: 'Litoral_Sul' },
   { id: 'serra-sc', name: 'Serra Catarinense', country: 'Brasil', lat: -28.01, lng: -49.59, sub: 'Urubici_Altos' },

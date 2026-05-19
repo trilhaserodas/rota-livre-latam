@@ -2954,7 +2954,7 @@ export default function AdventureMap() {
       </aside>
 
       {/* --- MAP MAIN VIEWPORT --- */}
-      <div className="w-full h-[75vh] lg:h-full relative flex flex-col flex-shrink-0 lg:flex-1 bg-[#0b0c0d] border-l lg:border-l border-white/5 isolate order-first lg:order-last">
+      <div className="w-full h-auto min-h-[55vh] lg:h-full relative flex flex-col flex-shrink-0 lg:flex-1 bg-[#0b0c0d] border-l lg:border-l border-white/5 isolate order-first lg:order-last">
           {/* Real-Time GPS Tracking Widget */}
           <GPSTracker 
             className="absolute bottom-6 right-6 z-[3500] hidden lg:block"
@@ -2968,7 +2968,7 @@ export default function AdventureMap() {
             }}
           />
           <GPSTracker 
-            className="absolute bottom-6 right-[60px] z-[3500] lg:hidden"
+            className="absolute top-[calc(55vh-48px)] right-[60px] z-[3500] lg:hidden"
             isSharing={isSharing}
             onToggleSharing={setIsSharing}
             isSignedIn={isSignedIn}
@@ -2980,7 +2980,7 @@ export default function AdventureMap() {
           />
 
           {/* --- MAP CORE (Layer 0) --- */}
-          <div className="absolute inset-0 z-0">
+          <div className="relative lg:absolute h-[55vh] lg:h-auto lg:inset-0 z-0 w-full">
             <MapContainer 
               center={mapCenter} 
               zoom={mapZoom} 
@@ -3701,8 +3701,8 @@ export default function AdventureMap() {
 
       {/* Responsive Categories Bar - REMOVED */}
 
-      {/* Right Action Stack (Vertical controls) - Repositioned for Mobile to bottom-right */}
-      <div className="absolute right-4 bottom-4 lg:top-1/2 lg:-translate-y-1/2 z-[4000] flex flex-col gap-2 pointer-events-auto">
+      {/* Right Action Stack (Vertical controls) - Repositioned for Mobile to bottom-right (within 55vh map constraints) */}
+      <div className="absolute right-4 top-[calc(55vh-160px)] lg:bottom-auto lg:top-1/2 lg:-translate-y-1/2 z-[4000] flex flex-col gap-2 pointer-events-auto">
          {/* Tactical Mobile Menu Trigger */}
          <button 
            onClick={() => {
@@ -3890,9 +3890,9 @@ export default function AdventureMap() {
             initial={{ y: 200 }} 
             animate={{ y: isBottomPanelMinimized ? 150 : 0 }} 
             exit={{ y: 200 }}
-            className="absolute bottom-0 left-0 right-0 z-[2100] pointer-events-auto"
+            className="relative lg:absolute bottom-auto lg:bottom-6 left-auto lg:left-1/2 right-auto lg:-translate-x-1/2 w-full lg:max-w-2xl z-[2100] pointer-events-auto px-0 lg:px-4"
           >
-             <div className="max-w-4xl mx-auto bg-black/90 backdrop-blur-2xl border-t border-x border-white/10 shadow-[0_-20px_50px_rgba(0,0,0,0.8)] overflow-hidden">
+             <div className="w-full bg-black/90 backdrop-blur-2xl border-t lg:border border-white/10 lg:rounded-md shadow-[0_-20px_50px_rgba(0,0,0,0.8)] lg:shadow-[0_15px_50px_rgba(0,0,0,0.9)] overflow-hidden">
                 {/* Minimal Header for Minimized state */}
                 {isBottomPanelMinimized && (
                    <div className="h-10 px-6 flex items-center justify-between border-b border-white/5 bg-[#ff641d]/5 cursor-pointer" onClick={() => setIsBottomPanelMinimized(false)}>
