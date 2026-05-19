@@ -3152,18 +3152,7 @@ export default function AdventureMap() {
 
           {/* Mode Controls Right (Minimal on PC, full on Mobile) */}
           <div className="flex gap-2 pointer-events-auto self-end md:self-auto lg:hidden">
-             <button 
-               onClick={handleAIAnalysis}
-               className={cn(
-                 "h-14 px-5 rounded-sm font-mono font-black text-[10px] uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-2 border shadow-[0_0_20px_rgba(34,211,238,0.2)] overflow-hidden relative group",
-                 showAIPanel 
-                   ? "bg-cyan-500 border-cyan-400 text-white" 
-                   : "bg-black/80 border-cyan-500/30 text-cyan-400/60 hover:border-cyan-400"
-               )}
-             >
-               <Activity size={14} className={isAnalyzingAI ? "animate-spin" : "animate-pulse"} /> 
-               <span>{isAnalyzingAI ? "AI" : "INTEL"}</span>
-             </button>
+
 
              <button 
                onClick={() => setIsExpeditionMode(!isExpeditionMode)}
@@ -3784,17 +3773,7 @@ export default function AdventureMap() {
             <Menu size={18} />
          </button>
 
-         <button 
-           onClick={handleAIAnalysis}
-           className={cn(
-             "w-10 h-10 lg:w-12 lg:h-12 border rounded-sm transition-all shadow-xl flex items-center justify-center group relative",
-             showAIPanel ? "bg-cyan-500 border-cyan-500 text-white shadow-[0_0_15px_#22d3ee]" : "bg-black/80 border-cyan-500/30 text-cyan-400 hover:border-cyan-500"
-           )}
-           title="AI_TACTICAL_ANALYSIS"
-         >
-            <Zap size={18} className={isAnalyzingAI ? "animate-spin text-white" : ""} />
-            <div className="absolute right-full mr-3 px-2 py-1 bg-black text-[8px] font-mono whitespace-nowrap opacity-0 group-hover:opacity-100 border border-white/10 pointer-events-none uppercase">AI_TACTICAL</div>
-         </button>
+
 
          <button 
            onClick={handleLocateUser} 

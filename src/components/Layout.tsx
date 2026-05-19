@@ -423,7 +423,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           </div>
         </div>
       </footer>
-      <RadarIA />
+      {location.pathname !== '/mapa' && <RadarIA />}
     </div>
   );
 }
