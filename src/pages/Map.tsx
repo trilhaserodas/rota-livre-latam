@@ -3120,17 +3120,17 @@ export default function AdventureMap() {
 
       {/* TACTICAL SUPERIOR NAVIGATION BAR (Unified & Responsive) */}
       <div className="absolute top-0 left-0 right-0 z-[2000] p-4 md:p-6 pointer-events-none flex flex-col items-center gap-4">
-        <div className="w-full max-w-7xl bg-black/80 backdrop-blur-3xl border border-white/10 rounded-sm p-1.5 flex flex-col lg:flex-row items-stretch lg:items-center gap-2 pointer-events-auto shadow-[0_20px_50px_rgba(0,0,0,0.8)] transition-all">
+        <div className="w-full max-w-7xl bg-[#0a0a0a]/45 backdrop-blur-md border border-[#ff7828]/18 rounded-sm p-1.5 flex flex-col lg:flex-row items-stretch lg:items-center gap-2 pointer-events-auto shadow-[0_20px_50px_rgba(0,0,0,0.4),0_0_20px_rgba(255,100,29,0.05)] transition-all ring-1 ring-white/5 ring-inset">
           
           {/* Section 1: Filters & Vehicles (Left on Desktop) */}
-          <div className="flex items-center gap-2 bg-white/[0.03] rounded-xs p-1 border border-white/5 order-2 lg:order-1 self-stretch lg:self-auto overflow-x-auto no-scrollbar">
+          <div className="flex items-center gap-2 bg-white/[0.02] rounded-xs p-1 border border-[#ff7828]/10 order-2 lg:order-1 self-stretch lg:self-auto overflow-x-auto no-scrollbar">
              <button 
                onClick={() => setShowFilters(!showFilters)}
                className={cn(
                  "h-10 px-3 rounded-xs flex items-center justify-center gap-2 transition-all border shrink-0",
                  showFilters 
                   ? "bg-[#ff641d] border-[#ff641d] text-white shadow-[0_0_15px_rgba(255,100,29,0.5)]" 
-                  : "bg-white/5 border-white/5 text-white/40 hover:border-[#ff641d]/40 hover:text-white"
+                  : "bg-white/[0.03] border-[#ff7828]/10 text-white/40 hover:border-[#ff641d]/40 hover:text-white hover:bg-white/[0.08]"
                )}
                title="FILTROS_DE_DIFICULDADE"
              >
@@ -3151,10 +3151,10 @@ export default function AdventureMap() {
                     key={v.id}
                     onClick={() => setTransportMode(v.id as any)}
                     className={cn(
-                      "w-10 h-10 rounded-xs flex items-center justify-center transition-all group relative shrink-0",
+                      "w-10 h-10 rounded-xs flex items-center justify-center transition-all group relative shrink-0 border border-transparent",
                       transportMode === v.id 
-                        ? "bg-[#ff641d] text-white shadow-[0_0_10px_rgba(255,100,29,0.4)]" 
-                        : "text-white/20 hover:bg-white/5 hover:text-white"
+                        ? "bg-[#ff641d] text-white shadow-[0_0_15px_rgba(255,100,29,0.3)] border-[#ff641d]/50" 
+                        : "text-white/20 hover:bg-white/[0.05] hover:text-white hover:border-[#ff641d]/20"
                     )}
                     title={v.label}
                   >
@@ -3203,7 +3203,7 @@ export default function AdventureMap() {
                        setShowSuggestions(true);
                      }}
                      onFocus={() => setShowSuggestions(true)}
-                     className="w-full h-full bg-white/[0.02] border border-white/5 rounded-xs pl-11 pr-10 text-[10px] font-mono tracking-[0.15em] focus:outline-none focus:border-[#ff641d]/50 focus:bg-white/[0.04] transition-all text-white placeholder:text-white/10 uppercase"
+                     className="w-full h-full bg-white/[0.02] border border-[#ff7828]/10 rounded-xs pl-11 pr-10 text-[10px] font-mono tracking-[0.15em] focus:outline-none focus:border-[#ff641d]/50 focus:bg-white/[0.04] transition-all text-white placeholder:text-white/10 uppercase"
                    />
                    <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
                       {isSearching && <div className="w-3 h-3 border border-[#ff641d]/20 border-t-[#ff641d] rounded-full animate-spin" />}
@@ -3332,7 +3332,7 @@ export default function AdventureMap() {
                     "h-12 px-4 rounded-xs border flex items-center justify-center gap-2 transition-all font-mono font-black text-[9px] tracking-[0.2em] uppercase whitespace-nowrap",
                     showRoutesMenu || selectedPreDefinedRoute 
                       ? "bg-[#ff641d]/10 border-[#ff641d] text-[#ff641d] shadow-[0_0_15px_rgba(255,100,29,0.2)]" 
-                      : "bg-white/[0.02] border-white/5 text-white/20 hover:border-[#ff641d]/40 hover:text-white"
+                      : "bg-white/[0.03] border-[#ff7828]/10 text-white/20 hover:border-[#ff641d]/40 hover:text-white hover:bg-white/[0.08]"
                   )}
                 >
                   <MapPin size={16} className={showRoutesMenu ? "animate-bounce" : ""} />
@@ -3430,7 +3430,7 @@ export default function AdventureMap() {
                  "h-10 px-4 rounded-xs border flex items-center justify-center gap-2 transition-all shrink-0",
                  showHeatmap 
                   ? "bg-[#ff641d] border-[#ff641d] text-white shadow-[0_0_15px_rgba(255,100,29,0.5)]" 
-                  : "bg-white/5 border-white/5 text-white/40 hover:border-white/20 hover:text-white"
+                  : "bg-white/[0.03] border-[#ff7828]/10 text-white/40 hover:border-[#ff641d]/30 hover:text-white hover:bg-white/[0.08]"
                )}
                title="MAPA_DE_CALOR"
              >
@@ -3446,8 +3446,8 @@ export default function AdventureMap() {
                className={cn(
                  "h-10 px-4 rounded-xs border flex items-center gap-3 transition-all font-mono font-black text-[9px] tracking-[0.2em] uppercase shrink-0 min-w-[120px]",
                  isExpeditionMode 
-                  ? "bg-[#ff641d]/10 border-[#ff641d] text-[#ff641d]" 
-                  : "bg-white/5 border-white/5 text-white/20 hover:border-white/20"
+                  ? "bg-[#ff641d]/10 border-[#ff641d] text-[#ff641d] hover:bg-[#ff641d]/20 shadow-[0_0_15px_rgba(255,100,29,0.1)]" 
+                  : "bg-white/[0.03] border-[#ff7828]/10 text-white/20 hover:border-[#ff641d]/30 hover:bg-white/[0.08]"
                )}
              >
                <div className={cn(
@@ -3466,7 +3466,7 @@ export default function AdventureMap() {
               initial={{ height: 0, opacity: 0, y: -10 }}
               animate={{ height: 'auto', opacity: 1, y: 0 }}
               exit={{ height: 0, opacity: 0, y: -10 }}
-              className="w-full max-w-7xl bg-black/90 backdrop-blur-3xl border border-white/10 overflow-hidden rounded-sm pointer-events-auto shadow-2xl relative z-[1900]"
+              className="w-full max-w-7xl bg-[#0a0a0a]/60 backdrop-blur-md border border-[#ff7828]/18 overflow-hidden rounded-sm pointer-events-auto shadow-[0_30px_60px_rgba(0,0,0,0.5)] relative z-[1900]"
             >
                 <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-8">
                   {/* Difficulty Filter */}
@@ -3541,7 +3541,7 @@ export default function AdventureMap() {
                animate={{ opacity: 1, y: 0 }}
                className="hidden lg:flex flex-col gap-3 pointer-events-auto max-w-full"
              >
-                <div className="flex flex-wrap justify-center gap-4 md:gap-6 bg-black/80 backdrop-blur-xl border border-white/10 p-3 md:p-4 rounded-sm shadow-2xl relative overflow-hidden">
+                <div className="flex flex-wrap justify-center gap-4 md:gap-6 bg-[#0a0a0a]/45 backdrop-blur-md border border-[#ff7828]/15 p-3 md:p-4 rounded-sm shadow-2xl relative overflow-hidden ring-1 ring-white/5 ring-inset">
                    {/* Scanline pattern for tech vibe */}
                    <div className="absolute inset-x-0 top-0 h-[1px] bg-white/5" />
                    
