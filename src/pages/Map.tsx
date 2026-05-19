@@ -11,7 +11,7 @@ import {
   Camera, AlertTriangle, ShieldCheck, Layers, ArrowUpRight, 
   Bike, Triangle, Plus, Minus, Crosshair, Fuel, Shield, 
   LocateFixed, Zap, Navigation, Globe, Navigation2, Compass as CompassIcon,
-  Share2, Ruler, Trash2, Radio, UserPlus, Link as LinkIcon, Wind, Thermometer,
+  Share2, Ruler, Trash2, Radio, UserPlus, Link as LinkIcon, Wind, Thermometer, Send,
   Cloud, Sun, CloudRain, Database, Heart, Cpu, Minimize2, Maximize2,
   Mountain, Clock, Info, ShieldAlert, Wifi, Battery, Eye, Activity, Car, Truck,
   Map as MapIcon, ChevronLeft, ChevronRight, X, Menu
@@ -39,6 +39,15 @@ interface WeatherData {
   humidity: number;
   windSpeed: number;
   icon: string;
+  debug?: {
+    source: string;
+    hasKey: boolean;
+    latitude: number;
+    longitude: number;
+    env: string;
+    statusText?: string;
+    errorText?: string;
+  };
 }
 
 const preDefinedRoutes = [
@@ -1456,6 +1465,9 @@ export default function AdventureMap() {
   const [isBottomPanelMinimized, setIsBottomPanelMinimized] = useState(false);
   const [isPointDetailsMinimized, setIsPointDetailsMinimized] = useState(false);
   const [showSidebarMobile, setShowSidebarMobile] = useState(false);
+  const [showShareMenu, setShowShareMenu] = useState(false);
+  const [copied, setCopied] = useState(false);
+
   const sidebarRef = useRef<HTMLElement>(null);
   const dragControls = useDragControls();
 
@@ -1506,6 +1518,16 @@ export default function AdventureMap() {
   const [isSharing, setIsSharing] = useState(false);
   const [trackingId, setTrackingId] = useState<string | null>(null);
   const [otherSessions, setOtherSessions] = useState<any[]>([]);
+
+  const getShareUrl = useCallback(() => {
+    if (selectedPreDefinedRoute) {
+      return `${window.location.origin}/mapa?route=${selectedPreDefinedRoute.id}`;
+    } else if (routePoints.length > 0) {
+      return `${window.location.origin}/mapa?pts=${encodeURIComponent(JSON.stringify(routePoints))}`;
+    } else {
+      return `${window.location.origin}/mapa?lat=${mapCenter[0].toFixed(5)}&lng=${mapCenter[1].toFixed(5)}&zoom=${mapZoom}`;
+    }
+  }, [selectedPreDefinedRoute, routePoints, mapCenter, mapZoom]);
   
   // Stats
   const totalDistance = useMemo(() => {
@@ -1771,26 +1793,26 @@ export default function AdventureMap() {
 
   // Weather Cache & Fetching
   const weatherCache = useRef<Record<string, { data: any, timestamp: number }>>({});
-  const isCurrentlyFetching = useRef(false);
 
-  const fetchWeather = useCallback(async (lat: number, lng: number) => {
-    if (lat === undefined || lng === undefined) return;
+  const fetchWeather = useCallback(async (lat: number, lng: number, signal?: AbortSignal) => {
+    if (lat === undefined || lng === undefined || lat === null || lng === null) return;
     
     const cacheKey = `${lat.toFixed(4)},${lng.toFixed(4)}`;
     const now = Date.now();
     
+    // 1. Check Cache
     if (weatherCache.current[cacheKey] && (now - weatherCache.current[cacheKey].timestamp < 300000)) {
       setWeatherData(weatherCache.current[cacheKey].data);
+      setIsLoadingWeather(false); // Ensure loading is stopped if using cache
       return;
     }
 
-    if (isCurrentlyFetching.current) return;
-
-    console.log(`[Clima] DIAGNÓSTICO FRONTEND - LAT: ${lat}, LON: ${lng}`);
-    isCurrentlyFetching.current = true;
+    console.log(`[Clima] INICIANDO FETCH - LAT: ${lat}, LON: ${lng}`);
     setIsLoadingWeather(true);
+    setWeatherData(null); // Clear previous data while fetching new one for a new location
+
     try {
-      const response = await fetch(`/api/weather?lat=${lat}&lon=${lng}`);
+      const response = await fetch(`/api/weather?lat=${lat}&lon=${lng}`, { signal });
       
       if (!response.ok) {
         const errText = await response.text();
@@ -1803,7 +1825,7 @@ export default function AdventureMap() {
       }
 
       const data = await response.json();
-      console.log(`[Clima] DIAGNÓSTICO FRONTEND - RESPOSTA JSON COMPLETA:`, data);
+      console.log(`[Clima] RESPOSTA RECEBIDA - LAT: ${lat}, LON: ${lng}`);
       
       if (!data || !data.main || !data.weather || !data.weather[0]) {
         throw new Error('DADOS_CLIMA_ESTRUTURA_INVÁLIDA');
@@ -1812,29 +1834,73 @@ export default function AdventureMap() {
       const mappedData: WeatherData = {
         temp: Math.round(data.main.temp ?? 0),
         feelsLike: Math.round(data.main.feels_like ?? data.main.temp ?? 0),
-        description: data.weather[0].description || "CONDIÇÃO_N/A",
+        description: (data.weather[0].description || "CONDIÇÃO_N/A").toUpperCase(),
         humidity: data.main.humidity ?? 0,
         windSpeed: data.wind ? Math.round((data.wind.speed ?? 0) * 3.6) : 0, 
-        icon: `https://openweathermap.org/img/wn/${data.weather[0].icon}@4x.png`
+        icon: `https://openweathermap.org/img/wn/${data.weather[0].icon}@4x.png`,
+        debug: {
+          source: data.debug?.source || 'unknown',
+          hasKey: !!data.debug?.hasKey,
+          latitude: data.debug?.latitude ?? lat,
+          longitude: data.debug?.longitude ?? lng,
+          env: data.debug?.env || 'production',
+          statusText: 'API CONNECTED',
+          errorText: ''
+        }
       };
 
-      setWeatherData(mappedData);
-      weatherCache.current[cacheKey] = { data: mappedData, timestamp: now };
+      if (!signal?.aborted) {
+        setWeatherData(mappedData);
+        weatherCache.current[cacheKey] = { data: mappedData, timestamp: now };
+      }
     } catch (err: any) {
+      if (err.name === 'AbortError') {
+        console.log(`[Clima] Abortado: ${lat}, ${lng}`);
+        return;
+      }
       console.error("[Clima] Falha:", err.message);
-      setWeatherData(null);
+      if (!signal?.aborted) {
+        const fallbackErrorData: WeatherData = {
+          temp: 0,
+          feelsLike: 0,
+          description: 'FALHA NO SINAL',
+          humidity: 0,
+          windSpeed: 0,
+          icon: '',
+          debug: {
+            source: 'error',
+            hasKey: false,
+            latitude: lat,
+            longitude: lng,
+            env: 'production',
+            statusText: 'FETCH FAILED',
+            errorText: err.message || 'Erro de conexão/CORS ou Endpoint indisponível'
+          }
+        };
+        setWeatherData(fallbackErrorData);
+      }
     } finally {
-      setIsLoadingWeather(false);
-      isCurrentlyFetching.current = false;
+      if (!signal?.aborted) {
+        setIsLoadingWeather(false);
+      }
     }
   }, []);
 
   useEffect(() => {
+    const controller = new AbortController();
+    
     if (selectedPoint) {
-      fetchWeather(selectedPoint.lat, selectedPoint.lng);
+      console.log(`[Clima HUD Log] useEffect disparado por ponto selecionado: "${selectedPoint.name}" (${selectedPoint.lat}, ${selectedPoint.lng})`);
+      fetchWeather(selectedPoint.lat, selectedPoint.lng, controller.signal);
     } else {
+      console.log(`[Clima HUD Log] selectedPoint é null, limpando dados do clima.`);
       setWeatherData(null);
     }
+
+    return () => {
+      console.log(`[Clima HUD Log] Abortando requisição de clima anterior para "${selectedPoint?.name || 'Nenhum'}"`);
+      controller.abort();
+    };
   }, [selectedPoint, fetchWeather]);
 
   const handleRoutingSearch = async (e: React.FormEvent) => {
@@ -2023,6 +2089,54 @@ export default function AdventureMap() {
       setActiveTab('expedition');
     }
   }, [selectedPreDefinedRoute]);
+
+  // Load route/points/coords from URL if shared
+  useEffect(() => {
+    const routeId = searchParams.get('route');
+    const ptsParam = searchParams.get('pts');
+    const queryLat = searchParams.get('lat');
+    const queryLng = searchParams.get('lng');
+    const queryZoom = searchParams.get('zoom');
+    
+    // 1. Predefined route parsing
+    if (routeId) {
+      const found = preDefinedRoutes.find(r => r.id === routeId);
+      if (found) {
+        console.log(`[URL Share] Carregando rota compartilhada: ${found.name}`);
+        selectRoute(found);
+      }
+    } 
+    // 2. Custom points parsing
+    else if (ptsParam) {
+      try {
+        const decodedPts = JSON.parse(decodeURIComponent(ptsParam));
+        if (Array.isArray(decodedPts) && decodedPts.length > 0) {
+          console.log(`[URL Share] Carregando pontos de rota personalizados:`, decodedPts);
+          setRoutePoints(decodedPts);
+          if (decodedPts[0]) {
+            setMapCenter(decodedPts[0]);
+            fetchWeather(decodedPts[0][0], decodedPts[0][1]);
+          }
+        }
+      } catch (err) {
+        console.error("[URL Share] Erro ao decodificar pontos da rota compartilhada:", err);
+      }
+    }
+    // 3. Viewport/Marker center parsing
+    else if (queryLat && queryLng) {
+      const latVal = parseFloat(queryLat);
+      const lngVal = parseFloat(queryLng);
+      if (!isNaN(latVal) && !isNaN(lngVal)) {
+        console.log(`[URL Share] Centralizando mapa nas coordenadas compartilhadas: ${latVal}, ${lngVal}`);
+        setMapCenter([latVal, lngVal]);
+        if (queryZoom) {
+          const zVal = parseInt(queryZoom, 10);
+          if (!isNaN(zVal)) setMapZoom(zVal);
+        }
+        fetchWeather(latVal, lngVal);
+      }
+    }
+  }, [searchParams]);
 
   const handleDownloadRoute = async (e: React.MouseEvent, route: any) => {
     e.stopPropagation();
@@ -3672,19 +3786,129 @@ export default function AdventureMap() {
            <div className="absolute right-full mr-3 px-2 py-1 bg-black text-[8px] font-mono whitespace-nowrap opacity-0 group-hover:opacity-100 border border-white/10 pointer-events-none uppercase">Modo_Térmico</div>
          </button>
 
-         <button 
-           onClick={() => setIsSharing(!isSharing)} 
-           title="TRACKING GPS LIVE"
-           className={cn(
-             "w-10 h-10 lg:w-12 lg:h-12 border rounded-sm transition-all shadow-xl flex items-center justify-center group relative", 
-             isSharing ? "bg-blue-500 border-blue-500 animate-pulse text-white" : "bg-black/80 border-white/10 text-white/20 hover:border-blue-500/40"
-           )}
-         >
-            <Radio size={18} />
-            <div className="absolute right-full mr-3 px-2 py-1 bg-black text-[8px] font-mono whitespace-nowrap opacity-0 group-hover:opacity-100 border border-white/10 pointer-events-none uppercase">Live_Tracking</div>
-         </button>
+          <button 
+            onClick={() => setIsSharing(!isSharing)} 
+            title="TRACKING GPS LIVE"
+            className={cn(
+              "w-10 h-10 lg:w-12 lg:h-12 border rounded-sm transition-all shadow-xl flex items-center justify-center group relative", 
+              isSharing ? "bg-blue-500 border-blue-500 animate-pulse text-white" : "bg-black/80 border-white/10 text-white/20 hover:border-blue-500/40"
+            )}
+          >
+             <Radio size={18} />
+             <div className="absolute right-full mr-3 px-2 py-1 bg-black text-[8px] font-mono whitespace-nowrap opacity-0 group-hover:opacity-100 border border-white/10 pointer-events-none uppercase">Live_Tracking</div>
+          </button>
 
-         <div className="h-[1px] bg-white/5 my-1" />
+          {/* COMPARTILHAMENTO MINIMALISTA */}
+          <div className="relative group/share">
+            <button 
+              onClick={() => {
+                setShowShareMenu(!showShareMenu);
+                // Auto-close after 8 seconds of idle time
+                setTimeout(() => setShowShareMenu(false), 8000);
+              }} 
+              title="COMPARTILHAR ROTA OU LOCAL"
+              className={cn(
+                "w-10 h-10 lg:w-12 lg:h-12 border rounded-sm transition-all shadow-xl flex items-center justify-center relative", 
+                showShareMenu 
+                  ? "bg-[#ff641d] border-[#ff641d] text-white" 
+                  : (routePoints.length > 0 || !!selectedPreDefinedRoute)
+                    ? "bg-black/80 border-[#ff641d]/50 text-[#ff641d] hover:bg-[#ff641d] hover:text-white"
+                    : "bg-black/80 border-white/10 text-[#ff641d]/80 hover:text-white hover:border-white/30"
+              )}
+            >
+               <Share2 size={16} className={cn((routePoints.length > 0 || !!selectedPreDefinedRoute) && "animate-pulse")} />
+               <div className="absolute right-full mr-3 px-2 py-1 bg-black text-[8px] font-mono whitespace-nowrap opacity-0 group-hover:opacity-100 border border-white/10 pointer-events-none uppercase">Compartilhar_Rota</div>
+            </button>
+
+            {/* Balão/Dropdown de Compartilhamento Minimalista */}
+            <AnimatePresence>
+              {showShareMenu && (
+                <motion.div 
+                  initial={{ opacity: 0, x: 10, scale: 0.95 }}
+                  animate={{ opacity: 1, x: 0, scale: 1 }}
+                  exit={{ opacity: 0, x: 10, scale: 0.95 }}
+                  className="absolute right-full top-1/2 -translate-y-1/2 mr-3 w-60 bg-[#0b0c0d]/95 backdrop-blur-xl border border-[#ff641d]/30 rounded-sm overflow-hidden z-[5000] shadow-[0_10px_30px_rgba(0,0,0,0.9)] p-3 space-y-2 pointer-events-auto"
+                >
+                  <div className="flex items-center justify-between border-b border-white/10 pb-1.5">
+                    <span className="text-[8px] font-mono text-[#ff641d] font-black tracking-widest uppercase">
+                      {selectedPreDefinedRoute ? "ROTA TÁTICA ATIVA" : routePoints.length > 0 ? "TRAJETO CUSTOMIZADO" : "COMPARTILHAR LOCAL"}
+                    </span>
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setShowShareMenu(false);
+                      }}
+                      className="text-white/40 hover:text-white transition-colors"
+                    >
+                      <X size={10} />
+                    </button>
+                  </div>
+
+                  <div className="text-[7px] font-mono text-white/50 uppercase leading-none truncate max-w-full">
+                    {selectedPreDefinedRoute ? `NOME: ${selectedPreDefinedRoute.name}` : routePoints.length > 0 ? `${routePoints.length} COORD_NODES` : `LAT: ${mapCenter[0].toFixed(4)} LON: ${mapCenter[1].toFixed(4)}`}
+                  </div>
+
+                  {/* Copy Link Section */}
+                  <div className="space-y-1">
+                    <button 
+                      onClick={async () => {
+                        try {
+                          await navigator.clipboard.writeText(getShareUrl());
+                          setCopied(true);
+                          setTimeout(() => setCopied(false), 2000);
+                        } catch (err) {
+                          console.error("Clipboard copy failed", err);
+                        }
+                      }}
+                      className="w-full flex items-center justify-between p-2 rounded-xs border border-white/10 bg-white/[0.02] hover:bg-white/[0.08] hover:border-[#ff641d]/50 transition-all font-mono text-[9px] font-black text-white text-left uppercase text-xs"
+                    >
+                      <span className="text-[9px]">{copied ? "COPIADO_SUCESSO!" : "COPIAR_LINK_ROTA"}</span>
+                      {copied ? (
+                        <div className="w-2 h-2 bg-green-500 rounded-full animate-ping" />
+                      ) : (
+                        <LinkIcon size={10} className="text-[#ff641d]" />
+                      )}
+                    </button>
+                  </div>
+
+                  {/* Social Share Buttons Grid */}
+                  <div className="grid grid-cols-3 gap-1 pt-1">
+                    <a 
+                      href={`https://api.whatsapp.com/send?text=${encodeURIComponent('Confira este trajeto no Rota Livre Hub GPS: ' + getShareUrl())}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="flex flex-col items-center justify-center p-2 rounded-xs border border-white/5 bg-[#25D366]/5 hover:bg-[#25D366]/20 hover:border-[#25D366]/50 transition-all font-mono text-[7px] font-black text-white/80 hover:text-white uppercase gap-1"
+                    >
+                      <Share2 size={12} className="text-[#25D366]" />
+                      <span>WHATSAPP</span>
+                    </a>
+                    
+                    <a 
+                      href={`https://t.me/share/url?url=${encodeURIComponent(getShareUrl())}&text=${encodeURIComponent('Confira este trajeto no Rota Livre Hub GPS:')}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="flex flex-col items-center justify-center p-2 rounded-xs border border-white/5 bg-[#0088cc]/5 hover:bg-[#0088cc]/20 hover:border-[#0088cc]/50 transition-all font-mono text-[7px] font-black text-white/80 hover:text-white uppercase gap-1"
+                    >
+                      <Send size={11} className="text-[#0088cc]" />
+                      <span>TELEGRAM</span>
+                    </a>
+
+                    <a 
+                      href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(getShareUrl())}&text=${encodeURIComponent('Confira este trajeto no Rota Livre Hub GPS!')}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="flex flex-col items-center justify-center p-2 rounded-xs border border-white/5 bg-white/5 hover:bg-white/10 hover:border-white/30 transition-all font-mono text-[7px] font-black text-white/80 hover:text-white uppercase gap-1"
+                    >
+                      <span className="text-[10px] font-black text-[#ff641d]">X</span>
+                      <span>TWITTER</span>
+                    </a>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          <div className="h-[1px] bg-white/5 my-1" />
 
          <div className="flex flex-col bg-black/40 border border-white/10 rounded-sm overflow-hidden text-[8px] font-mono text-white/20">
             <div className="p-1 lg:p-2 border-b border-white/5 text-center hidden lg:block uppercase tracking-tighter">ZOOM</div>

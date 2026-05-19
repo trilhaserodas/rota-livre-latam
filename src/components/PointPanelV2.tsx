@@ -27,6 +27,15 @@ interface PointPanelV2Props {
     humidity: number;
     windSpeed: number;
     icon: string;
+    debug?: {
+      source: string;
+      hasKey: boolean;
+      latitude: number;
+      longitude: number;
+      env: string;
+      statusText?: string;
+      errorText?: string;
+    };
   } | null;
   isLoadingWeather?: boolean;
   onIntegrateRoute?: (point: LocationPoint) => void;
@@ -498,6 +507,34 @@ const PointPanelV2: React.FC<PointPanelV2Props> = ({
                           </div>
                         </div>
                       </div>
+
+                      {/* Collapsible/Always on Diagnostic HUD in high tech theme */}
+                      {weatherData?.debug && (
+                        <div className="p-3 bg-black/60 border-t border-white/5 font-mono text-[9px] uppercase space-y-1">
+                          <div className="flex justify-between text-white/40">
+                            <span>DIAGNOSTIC STATUS:</span>
+                            <span className={cn(
+                              "font-bold",
+                              weatherData.debug.statusText === 'API CONNECTED' ? "text-green-400" : "text-red-400"
+                            )}>
+                              {weatherData.debug.statusText}
+                            </span>
+                          </div>
+                          <div className="grid grid-cols-2 gap-x-4 text-white/30 text-[8px]">
+                            <div>LAT: {weatherData.debug.latitude?.toFixed(4) || "N/A"}</div>
+                            <div>LON: {weatherData.debug.longitude?.toFixed(4) || "N/A"}</div>
+                            <div>SOURCE: {weatherData.debug.source}</div>
+                            <div>WEATHER KEY: {weatherData.debug.hasKey ? "LOADED" : "MISSING"}</div>
+                            <div>ENV: {weatherData.debug.env}</div>
+                            <div>GPS SENSOR: ONLINE</div>
+                          </div>
+                          {weatherData.debug.errorText && (
+                            <div className="text-red-400 text-[8px] leading-tight mt-1 border border-red-500/20 p-1.5 bg-red-950/20 max-h-16 overflow-y-auto">
+                              ERR_LOG: {weatherData.debug.errorText}
+                            </div>
+                          )}
+                        </div>
+                      )}
                   </div>
 
                   {/* 6. Operational Status HUD */}

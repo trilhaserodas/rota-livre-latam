@@ -1,3 +1,6 @@
+import dotenv from "dotenv";
+dotenv.config();
+
 import express from "express";
 import path from "path";
 import { createServer as createViteServer } from "vite";
@@ -125,89 +128,163 @@ Responda sempre em Português do Brasil.`,
     const { lat, lon } = req.query;
     const apiKey = process.env.WEATHER_API_KEY;
 
-    console.log(`[WeatherAPI] Received proxy request: lat=${lat}, lon=${lon}`);
+    // Use default values if lat/lon are missing or invalid
+    const latitude = parseFloat(String(lat));
+    const longitude = parseFloat(String(lon));
 
-    if (lat === undefined || lon === undefined || lat === "" || lon === "") {
-      return res.status(400).json({ error: "Latitude and longitude are required" });
+    console.log(`[WeatherAPI] Received proxy request: lat=${latitude}, lon=${longitude}`);
+
+    if (isNaN(latitude) || isNaN(longitude)) {
+      return res.status(400).json({ error: "Latitude e longitude válidas são obrigatórias" });
     }
 
     try {
-      // 1. Try OpenWeatherMap if API Key exists
-      if (apiKey) {
+      // 1. Try OpenWeatherMap if API Key exists and looks valid
+      if (apiKey && apiKey.length > 5) {
         try {
-          const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric&lang=pt_br`;
+          const url = `https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&appid=${apiKey}&units=metric&lang=pt_br`;
           console.log(`[WeatherAPI] Try OWM: ${url.split('appid=')[0]}`);
-          const response = await fetch(url);
+          
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), 8000);
+          
+          const response = await fetch(url, { 
+            signal: controller.signal,
+            headers: { 'User-Agent': 'RotaLivre-WeatherProxy/1.0' }
+          });
+          clearTimeout(timeout);
           
           if (response.ok) {
             const data = await response.json();
             console.log(`[WeatherAPI] OWM Success`);
-            return res.json(data);
+            res.setHeader('Cache-Control', 'public, max-age=600');
+            return res.json({
+              ...data,
+              debug: {
+                source: 'openweathermap',
+                hasKey: true,
+                latitude,
+                longitude,
+                env: process.env.NODE_ENV
+              }
+            });
           }
           console.warn(`[WeatherAPI] OWM Failed (${response.status}), falling back to Open-Meteo`);
-        } catch (owmErr) {
-          console.error(`[WeatherAPI] OWM Fetch Exception, falling back:`, owmErr);
+        } catch (owmErr: any) {
+          console.error(`[WeatherAPI] OWM Fetch Exception:`, owmErr.message);
         }
-      } else {
-        console.warn(`[WeatherAPI] Missing API Key, using Open-Meteo as primary source`);
       }
 
-      // 2. Fallback to Open-Meteo (Free, No Key)
-      const openMeteoUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`;
+      // 2. Fallback to Open-Meteo (Modern API)
+      const openMeteoUrl = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,weather_code,wind_speed_10m&timezone=auto`;
+      
       console.log(`[WeatherAPI] Fetching Open-Meteo: ${openMeteoUrl}`);
-      const omResponse = await fetch(openMeteoUrl);
+      
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 8000);
+      
+      const omResponse = await fetch(openMeteoUrl, { 
+        signal: controller.signal,
+        headers: { 'User-Agent': 'RotaLivre-WeatherProxy/1.0' }
+      });
+      clearTimeout(timeout);
       
       if (!omResponse.ok) {
-        throw new Error(`Open-Meteo failed with status ${omResponse.status}`);
+        throw new Error(`Open-Meteo falhou com status ${omResponse.status}`);
       }
 
       const omData = await omResponse.json();
       
+      if (!omData.current) {
+        throw new Error("Open-Meteo não retornou dados atuais (current)");
+      }
+
+      const current = omData.current;
+      
       // Adapt Open-Meteo structure to match what the frontend expects from OWM
       const adaptedData = {
         main: {
-          temp: omData.current_weather.temperature,
-          feels_like: omData.current_weather.temperature,
-          humidity: 65 // Fallback humidity
+          temp: current.temperature_2m,
+          feels_like: current.apparent_temperature ?? current.temperature_2m,
+          humidity: current.relative_humidity_2m ?? 0
         },
         weather: [
           {
-            description: getWmoDescription(omData.current_weather.weathercode),
-            icon: getWmoIcon(omData.current_weather.weathercode)
+            description: getWmoDescription(current.weather_code),
+            icon: getWmoIcon(current.weather_code, current.is_day)
           }
         ],
         wind: {
-          speed: omData.current_weather.windspeed / 3.6 
+          speed: (current.wind_speed_10m || 0) / 3.6 
         }
       };
 
       console.log(`[WeatherAPI] Open-Meteo Success (Adapted)`);
-      res.json(adaptedData);
+      res.setHeader('Cache-Control', 'public, max-age=600');
+      res.json({
+        ...adaptedData,
+        debug: {
+          source: 'open-meteo',
+          hasKey: !!apiKey,
+          latitude,
+          longitude,
+          env: process.env.NODE_ENV
+        }
+      });
 
     } catch (error: any) {
-      console.error("[WeatherAPI] Final Exception:", error);
-      res.status(500).json({ error: "Erro na conexão com serviço meteorológico", details: error?.message });
+      console.error("[WeatherAPI] Final Exception:", error.message);
+      res.status(500).json({ 
+        error: "Erro na conexão com serviço meteorológico", 
+        details: error?.message,
+        source: "backend_proxy",
+        debug: {
+          source: 'error',
+          hasKey: !!apiKey,
+          latitude,
+          longitude,
+          env: process.env.NODE_ENV
+        }
+      });
     }
   });
 
   // Helper functions for Open-Meteo adaptation
   function getWmoDescription(code: number): string {
     const codes: Record<number, string> = {
-      0: 'Céu Limpo', 1: 'Predom. Limpo', 2: 'Parcial. Nublado', 3: 'Nublado',
-      45: 'Nevoeiro', 48: 'Nevoeiro Escarchante', 51: 'Chuvisco Leve',
-      61: 'Chuva Leve', 63: 'Chuva Moderada', 65: 'Chuva Forte',
-      71: 'Neve Leve', 95: 'Trovoada'
+      0: 'Céu Limpo', 
+      1: 'Predominantemente Limpo', 
+      2: 'Parcialmente Nublado', 
+      3: 'Nublado',
+      45: 'Nevoeiro', 
+      48: 'Nevoeiro Escarchante', 
+      51: 'Chuvisco Leve',
+      53: 'Chuvisco Moderado',
+      55: 'Chuvisco Denso',
+      61: 'Chuva Leve', 
+      63: 'Chuva Moderada', 
+      65: 'Chuva Forte',
+      71: 'Neve Leve', 
+      73: 'Neve Moderada',
+      75: 'Neve Forte',
+      80: 'Pancadas de Chuva Leves',
+      81: 'Pancadas de Chuva Moderadas',
+      82: 'Pancadas de Chuva Violentas',
+      95: 'Trovoada Leve/Moderada',
+      96: 'Trovoada com Granizo Leve',
+      99: 'Trovoada com Granizo Forte'
     };
     return codes[code] || 'Condições Variáveis';
   }
 
-  function getWmoIcon(code: number): string {
-    if (code === 0) return '01d';
-    if (code <= 3) return '02d';
-    if (code <= 48) return '50d';
-    if (code <= 67) return '10d';
-    if (code <= 77) return '13d';
-    return '11d';
+  function getWmoIcon(code: number, isDay: number | boolean = 1): string {
+    const suffix = isDay === 1 || isDay === true ? 'd' : 'n';
+    if (code === 0) return `01${suffix}`;
+    if (code <= 3) return `02${suffix}`;
+    if (code <= 48) return `50${suffix}`;
+    if (code <= 67) return `10${suffix}`;
+    if (code <= 77) return `13${suffix}`;
+    return `11${suffix}`;
   }
 
   // Vite middleware for development

@@ -19,48 +19,37 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({ lat, lng }) => {
   const [error, setError] = useState(false);
 
   useEffect(() => {
+    const controller = new AbortController();
+
     const fetchWeather = async () => {
       try {
+        setError(false);
         setLoading(true);
-        // Using Open-Meteo API (Free, no key required)
-        const response = await fetch(
-          `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current_weather=true`
-        );
+        
+        // Use our server-side proxy for better reliability and OWM fallback
+        const response = await fetch(`/api/weather?lat=${lat}&lon=${lng}`, {
+          signal: controller.signal
+        });
+        
+        if (!response.ok) throw new Error('API_ERROR');
+        
         const data = await response.json();
 
-        if (data.current_weather) {
-          const cw = data.current_weather;
-          
-          // Map WMO Weather codes to descriptions (simplified)
-          const getCondition = (code: number) => {
-            if (code <= 3) return 'sunny';
-            if (code <= 67) return 'cloudy';
-            return 'rainy';
-          };
+        // Map icons/codes to local conditions
+        const getCondition = (icon: string) => {
+          if (icon.includes('01') || icon.includes('02')) return 'sunny';
+          if (icon.includes('03') || icon.includes('04') || icon.includes('50')) return 'cloudy';
+          return 'rainy';
+        };
 
-          const getDescription = (code: number) => {
-            const codes: Record<number, string> = {
-              0: 'Céu Limpo',
-              1: 'Predom. Limpo',
-              2: 'Parcial. Nublado',
-              3: 'Nublado',
-              45: 'Nevoeiro',
-              51: 'Drizzle Leve',
-              61: 'Chuva Leve',
-              71: 'Neve Leve',
-              95: 'Trovoada',
-            };
-            return codes[code] || 'Condições Variáveis';
-          };
-
-          setWeather({
-            temp: Math.round(cw.temperature),
-            windSpeed: cw.windspeed,
-            description: getDescription(cw.weathercode),
-            condition: getCondition(cw.weathercode)
-          });
-        }
-      } catch (err) {
+        setWeather({
+          temp: Math.round(data.main.temp),
+          windSpeed: Math.round(data.wind.speed * 3.6), // Convert m/s to km/h if it was m/s
+          description: data.weather[0].description,
+          condition: getCondition(data.weather[0].icon)
+        });
+      } catch (err: any) {
+        if (err.name === 'AbortError') return;
         console.error('Weather fetch error:', err);
         setError(true);
       } finally {
@@ -69,9 +58,11 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({ lat, lng }) => {
     };
 
     fetchWeather();
-    // Refresh every 15 minutes
     const interval = setInterval(fetchWeather, 15 * 60 * 1000);
-    return () => clearInterval(interval);
+    return () => {
+      controller.abort();
+      clearInterval(interval);
+    };
   }, [lat, lng]);
 
   if (loading) {
