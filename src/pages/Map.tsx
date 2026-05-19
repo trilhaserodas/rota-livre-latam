@@ -2074,33 +2074,43 @@ export default function AdventureMap() {
     setShowSuggestions(false);
     setMapBounds(null);
     
-    // Check for route match first
-    const routeMatch = routeSuggestions[0];
-    if (routeMatch && routeMatch.name.toLowerCase() === searchQuery.toLowerCase()) {
+    const query = searchQuery.toLowerCase().trim();
+
+    // 1. Check for route match (Pre-defined Routes)
+    const routeMatch = preDefinedRoutes.find(r => 
+      r.name.toLowerCase() === query || 
+      r.name.toLowerCase().includes(query) ||
+      (r.country && r.country.toLowerCase().includes(query))
+    );
+    
+    if (routeMatch) {
       selectRoute(routeMatch);
       setIsSearching(false);
       return;
     }
 
-    // First, check internal points
-    const internalMatch = initialPoints.find(p => 
-      p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.category.toLowerCase() === searchQuery.toLowerCase()
+    // 2. Check internal points (POIs) - use all available points
+    const allPoints = [...initialPoints, ...autoDiscoveredPoints];
+    const internalMatch = allPoints.find(p => 
+      p.name.toLowerCase().includes(query) ||
+      p.category.toLowerCase() === query
     );
 
     if (internalMatch) {
       setMapCenter([internalMatch.lat, internalMatch.lng]);
       setMapZoom(18);
+      setSelectedPoint(internalMatch);
       setIsSearching(false);
       return;
     }
 
+    // 3. Geocoding Fallback
     try {
       const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=1`);
       const data = await res.json();
       if (data?.[0]) {
         setMapCenter([parseFloat(data[0].lat), parseFloat(data[0].lon)]);
-        setMapZoom(16); // Smart Zoom Tactical
+        setMapZoom(16);
       }
     } finally {
       setIsSearching(false);
@@ -2681,7 +2691,10 @@ export default function AdventureMap() {
                                    setMapZoom(16);
                                    setSelectedPoint(poi);
                                  }}
-                                 className="w-full text-left p-4 bg-white/[0.02] border border-white/5 hover:border-[#ff641d]/50 hover:bg-[#ff641d]/5 transition-all group rounded-sm flex items-center gap-4"
+                                 className={cn(
+                                   "w-full text-left p-4 bg-white/[0.02] border border-white/5 hover:border-[#ff641d]/50 hover:bg-[#ff641d]/5 transition-all group rounded-sm flex items-center gap-4",
+                                   selectedPoint?.id === poi.id && "bg-[#ff641d]/10 border-[#ff641d]/40"
+                                 )}
                                >
                                   <div className={cn(
                                     "w-10 h-10 flex items-center justify-center rounded-sm shrink-0",
@@ -2909,14 +2922,14 @@ export default function AdventureMap() {
                     <>
                       <Polyline 
                         positions={routePoints} 
-                        color="#ff641d" 
+                        color={selectedPreDefinedRoute?.color || "#ff641d"} 
                         weight={12} 
                         opacity={0.1} 
                         lineJoin="round" 
                       />
                       <Polyline 
                         positions={routePoints} 
-                        color="#ff641d" 
+                        color={selectedPreDefinedRoute?.color || "#ff641d"} 
                         weight={3} 
                         dashArray="5, 8" 
                         opacity={0.8} 
