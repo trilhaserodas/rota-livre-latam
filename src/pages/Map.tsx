@@ -3161,41 +3161,7 @@ export default function AdventureMap() {
         }}
       />
 
-      {/* --- RIGHT TACTICAL STACK (Desktop Only) --- */}
-      <div className="hidden lg:flex fixed right-6 top-32 bottom-24 w-80 flex-col gap-6 pointer-events-none z-[6000]">
-        
-        {/* Live Expedition Feed if active */}
-        {isExpeditionMode && (
-          <div className="bg-black/80 backdrop-blur-3xl border border-white/10 p-5 rounded-sm shadow-2xl pointer-events-auto flex-1 overflow-hidden flex flex-col">
-             <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                   <Radio size={12} className="text-[#ff641d] animate-pulse" />
-                   <span className="text-[9px] font-mono font-black text-white uppercase tracking-widest">TACTICAL_FEED</span>
-                </div>
-                <div className="flex gap-1">
-                   <div className="w-1.5 h-1.5 bg-green-500 rounded-full" />
-                </div>
-             </div>
-             
-             <div className="flex-1 overflow-y-auto no-scrollbar space-y-3">
-                <div className="p-2 border-l border-white/10 bg-white/[0.02]">
-                   <div className="text-[7px] font-mono text-white/20 uppercase mb-1">{new Date().toLocaleTimeString()}</div>
-                   <div className="text-[9px] font-mono text-white/60 uppercase">ROTA_INICIADA_COM_SUCESSO</div>
-                </div>
-                <div className="p-2 border-l border-white/10 bg-white/[0.02]">
-                   <div className="text-[7px] font-mono text-white/20 uppercase mb-1">{new Date().toLocaleTimeString()}</div>
-                   <div className="text-[9px] font-mono text-white/60 uppercase">SINC_BANCO_DADOS_OFFLINE</div>
-                </div>
-                {autoDiscoveredPoints.slice(0, 3).map((p, i) => (
-                  <div key={i} className="p-2 border-l border-[#ff641d]/30 bg-[#ff641d]/5">
-                    <div className="text-[7px] font-mono text-[#ff641d]/40 uppercase mb-1">NODE_DETECTADO</div>
-                    <div className="text-[9px] font-mono text-white/80 uppercase truncate">{p.name}</div>
-                  </div>
-                ))}
-             </div>
-          </div>
-        )}
-      </div>
+      {/* --- RIGHT TACTICAL STACK (Desktop Only) - Removed TACTICAL_FEED --- */}
 
       {/* HUD OVERLAYS */}
 
