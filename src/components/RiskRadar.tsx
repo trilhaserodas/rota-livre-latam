@@ -43,70 +43,63 @@ const RiskRadar: React.FC<RiskRadarProps> = ({
   const alerts = useMemo(() => {
     const mockAlerts: Alert[] = [];
     
-    // Seeded "randomness" based on coordinates to make it feel "live" 
-    // but consistent for the same spot
+    if (!lat || !lng) return [];
+
     const seed = (lat || 0) + (lng || 0);
     const mod = (val: number) => Math.floor(Math.abs(val * 100)) % 100;
     
-    if (!lat || !lng) return [];
-
-    // Stability logic
-    if (mod(seed) < 40) {
+    // 1. Environmental Stability (Landslides, etc)
+    // High humidity or mountain context increases risk
+    const isMountainous = mod(seed * 1.5) > 60;
+    
+    if (isMountainous && mod(seed) > 70) {
       mockAlerts.push({
-        id: '1',
-        type: 'ESTADO_GERAL',
-        level: 'stable',
-        message: 'OPERAÇÃO SEGURA NA REGIÃO',
-        icon: ShieldCheck
-      });
-    } else if (mod(seed) < 70) {
-      mockAlerts.push({
-        id: '2',
-        type: 'VISIBILIDADE',
-        level: 'attention',
-        message: 'NEBLINA EM TRECHOS DE SERRA',
-        icon: EyeOff
-      });
-      mockAlerts.push({
-        id: '3',
-        type: 'CLIMA',
-        level: 'attention',
-        message: 'CHUVA MODERADA PREVISTA',
-        icon: CloudRain
-      });
-    } else if (mod(seed) < 90) {
-      mockAlerts.push({
-        id: '4',
-        type: 'ESTRADA',
-        level: 'moderate',
-        message: 'PISTA ESCORREGADIA / VENTOS',
-        icon: Wind
-      });
-    } else {
-      mockAlerts.push({
-        id: '5',
-        type: 'CRÍTICO',
+        id: 'landslide',
+        type: 'AVISO_GEOLÓGICO',
         level: 'critical',
-        message: 'RISCO DE DESLIZAMENTO ATIVO',
+        message: 'RISCO ALTO DE DESLIZAMENTO EM ACLIVES',
         icon: Mountain
-      });
-      mockAlerts.push({
-        id: '6',
-        type: 'BLOQUEIO',
-        level: 'critical',
-        message: 'ESTRADA PARCIALMENTE INTERDITADA',
-        icon: AlertOctagon
       });
     }
 
-    // Add route specific context if needed
-    if (hasActiveRoute && mockAlerts.length < 3) {
+    // 2. Road Blocks & Infrastructure
+    if (mod(seed * 2) > 85) {
       mockAlerts.push({
-        id: 'route-1',
-        type: 'LOGÍSTICA',
-        level: 'attention',
-        message: 'RECURSOS ESCASSOS NOS PRÓXIMOS 50KM',
+        id: 'block',
+        type: 'STATUS_VIA',
+        level: 'critical',
+        message: 'BLOQUEIO TOTAL EM ESTRADA SECUNDÁRIA',
+        icon: AlertOctagon
+      });
+    } else if (mod(seed * 2) > 60) {
+      mockAlerts.push({
+        id: 'hazard',
+        type: 'PERIGO_NA_PISTA',
+        level: 'moderate',
+        message: 'OBRAS / MÁQUINAS NA PISTA',
         icon: Construction
+      });
+    }
+
+    // 3. Operational State
+    if (mockAlerts.length === 0) {
+      mockAlerts.push({
+        id: 'stable-1',
+        type: 'INTEGRIDADE',
+        level: 'stable',
+        message: 'OPERAÇÃO NOMINAL - SEM RISCOS IDENTIFICADOS',
+        icon: ShieldCheck
+      });
+    }
+
+    // 4. Weather Hazards
+    if (mod(seed * 3) > 75) {
+      mockAlerts.push({
+        id: 'wind',
+        type: 'ATMOSFERA',
+        level: 'attention',
+        message: 'RAJADAS DE VENTO LATERAL (>40KM/H)',
+        icon: Wind
       });
     }
 
@@ -140,7 +133,12 @@ const RiskRadar: React.FC<RiskRadarProps> = ({
          </div>
       </div>
 
-      <div className="space-y-2">
+      <div className="space-y-2 relative">
+        {/* Radar Scan SVG effect */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden opacity-20">
+          <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-[#ff641d] to-transparent animate-[scan_3s_linear_infinite]" />
+        </div>
+
         <AnimatePresence mode="popLayout">
           {alerts.map((alert) => {
             const config = getStatusConfig(alert.level);

@@ -1319,17 +1319,24 @@ const categories = [
   { id: 'safe_point', name: 'Ponto Seguro', icon: ShieldCheck, color: '#10b981' },
 ];
 
-function createCustomIcon(color: string, glow: boolean = true) {
+function createCustomIcon(color: string, selected: boolean = false) {
+  const outerSize = selected ? 'w-10 h-10' : 'w-7 h-7';
+  const innerSize = selected ? 'w-4 h-4' : 'w-2.5 h-2.5';
+  
   return L.divIcon({
     className: 'custom-div-icon',
     html: `
       <div class="relative flex items-center justify-center">
-        ${glow ? `<div style="border-color: ${color}; box-shadow: inset 0 0 8px ${color}" class="absolute w-7 h-7 rounded-full border opacity-30 animate-pulse"></div>` : ''}
-        <div style="background-color: ${color}; box-shadow: 0 0 15px ${color}" class="w-2.5 h-2.5 rounded-full border-1 border-[#0b0c0d] relative z-10 transition-transform hover:scale-125"></div>
+        <div style="border-color: ${color}; box-shadow: inset 0 0 12px ${color}" class="absolute ${outerSize} rounded-full border-2 transition-all duration-500 ${selected ? 'opacity-80 scale-125' : 'opacity-20 animate-pulse'}"></div>
+        ${selected ? `
+          <div style="border-color: ${color}" class="absolute w-14 h-14 rounded-full border border-dashed opacity-40 animate-[spin_8s_linear_infinite]"></div>
+          <div style="border-color: ${color}" class="absolute w-12 h-12 rounded-full border border-double opacity-20 animate-[ping_3s_ease-in-out_infinite]"></div>
+        ` : ''}
+        <div style="background-color: ${color}; box-shadow: 0 0 20px ${color}" class="${innerSize} rounded-full border-2 border-[#0b0c0d] relative z-10 transition-all duration-500 ${selected ? 'scale-110 shadow-[0_0_30px_rgba(255,255,255,0.4)]' : ''}"></div>
       </div>
     `,
-    iconSize: [32, 32],
-    iconAnchor: [16, 16],
+    iconSize: [60, 60],
+    iconAnchor: [30, 30],
   });
 }
 
@@ -2976,14 +2983,20 @@ export default function AdventureMap() {
 
               {filteredPoints.map(p => {
                 const cat = categories.find(c => c.id === p.category) || categories[0];
+                const isSelected = selectedPoint?.id === p.id;
+                
                 return (
                   <Marker 
                     key={p.id} 
                     position={[p.lat, p.lng]} 
-                    icon={createCustomIcon(cat.color)}
+                    icon={isSelected ? createCustomIcon(cat.color, true) : createCustomIcon(cat.color)}
                     eventHandlers={{
-                      click: () => setSelectedPoint(p)
+                      click: () => {
+                        setSelectedPoint(p);
+                        setMapCenter([p.lat, p.lng]);
+                      }
                     }}
+                    zIndexOffset={isSelected ? 1000 : 0}
                   >
                     <MapTooltip direction="top" offset={[0, -10]} opacity={1} className="custom-tooltip">
                       <div className="bg-[#0b0c0d] border border-white/10 px-2 py-1 rounded-sm shadow-2xl">
@@ -3000,49 +3013,6 @@ export default function AdventureMap() {
          {/* HUD SCAN EFFECT */}
          <div className="absolute inset-x-0 top-0 h-[300px] pointer-events-none z-[1500] bg-gradient-to-b from-[#ff641d]/10 to-transparent opacity-20"></div>
 
-         {/* MAP HEADER CONTROLS (Floating minimal) */}
-         <div className="absolute top-0 left-0 right-0 z-[2000] p-4 md:p-6 pointer-events-none">
-            <div className="flex justify-between items-start">
-               {/* Mobile/Floating Logo */}
-               <div className="flex items-center gap-3 lg:hidden pointer-events-auto bg-black/80 backdrop-blur-md border border-white/10 p-2 px-4 rounded-sm shadow-2xl">
-                  <Navigation2 size={18} className={isExpeditionMode ? "animate-pulse text-[#ff641d]" : "text-white"} />
-                  <span className="text-[10px] font-mono font-black text-white uppercase tracking-tighter">GPS_TACTICAL</span>
-               </div>
-
-               <div className="flex-1" />
-
-               <div className="flex gap-2 pointer-events-auto">
-                  <button 
-                    onClick={() => setIsExpeditionMode(!isExpeditionMode)}
-                    className={cn(
-                      "h-10 px-4 rounded-sm font-mono font-black text-[9px] uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-2 border shadow-xl overflow-hidden relative group",
-                      isExpeditionMode ? "bg-[#ff641d] border-[#ff641d] text-white" : "bg-black/80 border-white/10 text-white/40"
-                    )}
-                  >
-                    <Zap size={12} className={isExpeditionMode ? "animate-pulse" : ""} /> 
-                    <span className="hidden sm:inline">LIVE_NAV</span>
-                  </button>
-                  
-                  <div className="flex bg-black/80 backdrop-blur-md border border-white/10 rounded-sm p-1">
-                     {['bike', 'moto', 'car', 'motorhome'].map((mode) => (
-                       <button 
-                         key={mode}
-                         onClick={() => setTransportMode(mode as any)}
-                         className={cn(
-                           "flex items-center justify-center w-8 h-8 rounded-xs transition-all",
-                           transportMode === mode ? "bg-[#ff641d] text-white" : "text-white/20 hover:bg-white/5"
-                         )}
-                       >
-                         {mode === 'bike' && <Bike size={12} />}
-                         {mode === 'moto' && <Zap size={12} />}
-                         {mode === 'car' && <Car size={12} />}
-                         {mode === 'motorhome' && <Truck size={12} />}
-                       </button>
-                     ))}
-                  </div>
-               </div>
-            </div>
-         </div>
 
          {/* SCAN EFFECT HUD */}
          <AnimatePresence>
@@ -3148,548 +3118,411 @@ export default function AdventureMap() {
          </div>
       </div>
 
-      {/* Top Header Control Panel - Simplified for Mobile */}
-      <div className="absolute top-0 left-0 right-0 z-[2000] p-4 md:p-6 pointer-events-none flex flex-col gap-6 items-center lg:items-end">
-        {/* Only show Search on mobile Map HUD */}
-        <div className="lg:hidden w-full max-w-2xl pointer-events-auto mt-2">
-           <form onSubmit={handleSearch} className="relative group">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-[#ff641d] transition-colors" size={18} />
-              <input 
-                type="text" 
-                placeholder="PROCURAR DESTINO NO MAPA..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-black/80 backdrop-blur-md border border-white/10 rounded-sm h-14 pl-12 pr-4 text-[10px] font-mono tracking-[0.2em] focus:outline-none focus:border-[#ff641d] transition-all text-white placeholder:text-white/20 uppercase shadow-2xl"
-              />
-           </form>
-        </div>
-
-        {/* Branding & Hidden Controls on Mobile */}
-        <div className="hidden lg:flex flex-col md:flex-row justify-between items-start md:items-center gap-4 w-full lg:w-auto">
-          {/* Branding Left (Mobile Only as Sidebar handles PC) */}
-          <motion.div 
-            initial={{ x: -20, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            className="flex lg:hidden items-center gap-3 pointer-events-auto"
-          >
-             <div className="p-2 bg-[#ff641d] text-white rounded-sm shadow-[0_0_20px_rgba(255,100,29,0.4)]">
-               <Navigation2 size={24} className={isExpeditionMode ? "animate-pulse" : ""} />
+      {/* TACTICAL SUPERIOR NAVIGATION BAR (Unified & Responsive) */}
+      <div className="absolute top-0 left-0 right-0 z-[2000] p-4 md:p-6 pointer-events-none flex flex-col items-center gap-4">
+        <div className="w-full max-w-7xl bg-black/80 backdrop-blur-3xl border border-white/10 rounded-sm p-1.5 flex flex-col lg:flex-row items-stretch lg:items-center gap-2 pointer-events-auto shadow-[0_20px_50px_rgba(0,0,0,0.8)] transition-all">
+          
+          {/* Section 1: Filters & Vehicles (Left on Desktop) */}
+          <div className="flex items-center gap-2 bg-white/[0.03] rounded-xs p-1 border border-white/5 order-2 lg:order-1 self-stretch lg:self-auto overflow-x-auto no-scrollbar">
+             <button 
+               onClick={() => setShowFilters(!showFilters)}
+               className={cn(
+                 "h-10 px-3 rounded-xs flex items-center justify-center gap-2 transition-all border shrink-0",
+                 showFilters 
+                  ? "bg-[#ff641d] border-[#ff641d] text-white shadow-[0_0_15px_rgba(255,100,29,0.5)]" 
+                  : "bg-white/5 border-white/5 text-white/40 hover:border-[#ff641d]/40 hover:text-white"
+               )}
+               title="FILTROS_DE_DIFICULDADE"
+             >
+               <Filter size={16} />
+               <span className="text-[8px] font-mono font-black uppercase tracking-widest hidden sm:inline">FILTROS</span>
+             </button>
+             
+             <div className="w-[1px] h-4 bg-white/10 mx-1 shrink-0" />
+             
+             <div className="flex gap-1">
+                {[
+                  { id: 'bike', icon: Bike, label: 'BIKE' },
+                  { id: 'moto', icon: Zap, label: 'MOTO' },
+                  { id: 'car', icon: Car, label: 'CARRO' },
+                  { id: 'motorhome', icon: Truck, label: 'RV' }
+                ].map((v) => (
+                  <button 
+                    key={v.id}
+                    onClick={() => setTransportMode(v.id as any)}
+                    className={cn(
+                      "w-10 h-10 rounded-xs flex items-center justify-center transition-all group relative shrink-0",
+                      transportMode === v.id 
+                        ? "bg-[#ff641d] text-white shadow-[0_0_10px_rgba(255,100,29,0.4)]" 
+                        : "text-white/20 hover:bg-white/5 hover:text-white"
+                    )}
+                    title={v.label}
+                  >
+                    <v.icon size={14} className={transportMode === v.id ? "drop-shadow-[0_0_5px_rgba(255,255,255,0.8)]" : ""} />
+                    {transportMode === v.id && (
+                       <motion.div layoutId="v-glow" className="absolute inset-0 bg-[#ff641d]/20 blur-md rounded-full -z-10" />
+                    )}
+                  </button>
+                ))}
              </div>
-             <div>
-                <div className="text-[8px] font-mono text-[#ff641d] uppercase tracking-[0.4em] font-black">SYSTEM_OS // v2.5</div>
-                <h1 className="text-xl font-display font-black text-white uppercase tracking-tighter leading-none">GPS_TACTICAL<span className="text-[#ff641d]">.</span>SYSTEM</h1>
+          </div>
+
+          {/* Section 2: Search Area (Center on Desktop - ~65%) */}
+          <div className="flex-[4] lg:flex-[6] min-w-0 order-1 lg:order-2 flex gap-2">
+             <div className="relative flex-1 group">
+                <AnimatePresence>
+                  {(isDiscoveringPOIs || isCalculatingRoute) && (
+                    <motion.div 
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.8 }}
+                      className="absolute -top-12 left-0 z-50 bg-black/90 backdrop-blur-xl border border-cyan-500/20 px-3 py-1 rounded-full flex items-center gap-2 shadow-2xl"
+                    >
+                      <div className={cn(
+                        "w-1.5 h-1.5 rounded-full animate-ping",
+                        isCalculatingRoute ? "bg-[#ff641d]" : "bg-cyan-400"
+                      )} />
+                      <span className={cn(
+                        "text-[7px] font-mono uppercase tracking-[0.2em] whitespace-nowrap",
+                        isCalculatingRoute ? "text-[#ff641d]" : "text-cyan-400"
+                      )}>
+                         {isCalculatingRoute ? "SINC_ESTRADAS..." : "OSM_SYNC..."}
+                      </span>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                <form onSubmit={handleSearch} className="relative h-12">
+                   <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-[#ff641d] transition-colors" size={16} />
+                   <input 
+                     type="text" 
+                     placeholder="PESQUISAR_ROTA_PAIS_OU_PONTO..."
+                     value={searchQuery}
+                     onChange={(e) => {
+                       setSearchQuery(e.target.value);
+                       setShowSuggestions(true);
+                     }}
+                     onFocus={() => setShowSuggestions(true)}
+                     className="w-full h-full bg-white/[0.02] border border-white/5 rounded-xs pl-11 pr-10 text-[10px] font-mono tracking-[0.15em] focus:outline-none focus:border-[#ff641d]/50 focus:bg-white/[0.04] transition-all text-white placeholder:text-white/10 uppercase"
+                   />
+                   <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                      {isSearching && <div className="w-3 h-3 border border-[#ff641d]/20 border-t-[#ff641d] rounded-full animate-spin" />}
+                      <button 
+                        type="button" 
+                        onClick={() => setIsRoutingExpanded(!isRoutingExpanded)}
+                        className={cn(
+                          "p-1.5 rounded-xs transition-all",
+                          isRoutingExpanded ? "text-[#ff641d]" : "text-white/20 hover:text-white"
+                        )}
+                        title="MODO_TRAJETÓRIA"
+                      >
+                         <Navigation size={14} />
+                      </button>
+                   </div>
+                </form>
+
+                {/* Search Suggestions Dropdown */}
+                <AnimatePresence>
+                  {showSuggestions && (searchQuery.length >= 2 || (routeSuggestions.length > 0 && searchQuery.length >= 0)) && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 10 }}
+                      className="absolute top-full left-0 right-0 mt-2 bg-[#0b0c0d]/95 backdrop-blur-3xl border border-[#ff641d]/20 rounded-sm overflow-hidden z-[5000] shadow-[0_20px_50px_rgba(0,0,0,0.9)]"
+                    >
+                      <div className="max-h-80 overflow-y-auto no-scrollbar">
+                        {/* Section 1: Pre-defined Routes */}
+                        {routeSuggestions.length > 0 && (
+                          <>
+                            <div className="p-2 border-b border-white/5 bg-white/[0.02] flex justify-between items-center sticky top-0 z-20 backdrop-blur-md">
+                              <span className="text-[7px] font-mono text-white/20 uppercase tracking-[0.3em]">ROTAS_TACTICAS_ENCONTRADAS</span>
+                              <span className="text-[7px] font-mono text-[#ff641d]/60 uppercase tracking-widest">{routeSuggestions.length} NODES</span>
+                            </div>
+                            {routeSuggestions.map(route => (
+                              <div key={route.id} className="flex items-center justify-between p-3 hover:bg-[#ff641d]/10 transition-colors border-b border-white/5 last:border-0 group/item">
+                                <button
+                                  onClick={() => {
+                                    selectRoute(route);
+                                    setShowSuggestions(false);
+                                  }}
+                                  className="flex-1 flex items-center justify-between text-left"
+                                >
+                                  <div className="flex flex-col items-start gap-1">
+                                    <span className="text-[9px] font-mono font-black text-white group-hover/item:text-[#ff641d] uppercase tracking-widest transition-colors">{route.name}</span>
+                                    <div className="flex items-center gap-2">
+                                       <Globe size={8} className="text-[#ff641d]/60" />
+                                       <span className="text-[7px] font-mono text-white/40 uppercase tracking-widest">{route.country}</span>
+                                    </div>
+                                  </div>
+                                  <div className={`text-[6px] font-mono px-1.5 py-0.5 rounded-xs border mr-4 ${
+                                    route.difficulty === 'CRITICAL' ? 'border-red-500/50 text-red-500' : 'border-blue-500/50 text-blue-500'
+                                  }`}>
+                                    {route.difficulty}
+                                  </div>
+                                </button>
+                                
+                                <button 
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    toggleFavoriteRoute(route);
+                                  }}
+                                  className={cn(
+                                     "p-1.5 rounded-full transition-all shrink-0",
+                                     savedRouteIds.includes(route.id) ? "text-red-500 bg-red-500/10" : "text-white/20 hover:text-red-500 hover:bg-white/5"
+                                  )}
+                                >
+                                   <Heart size={14} fill={savedRouteIds.includes(route.id) ? "currentColor" : "none"} />
+                                </button>
+                              </div>
+                            ))}
+                          </>
+                        )}
+
+                        {/* Section 2: Points of Interest (POIs) - Only show if enough query */}
+                        {filteredPoints.length > 0 && searchQuery.length >= 2 && (
+                          <>
+                            <div className="p-2 border-b border-white/5 bg-[#ff641d]/5 flex justify-between items-center sticky top-0 z-10 backdrop-blur-md">
+                              <span className="text-[7px] font-mono text-[#ff641d] uppercase tracking-[0.3em]">PONTOS_DE_INTERESSE_ENCONTRADOS</span>
+                              <span className="text-[7px] font-mono text-white/40 uppercase tracking-widest">{filteredPoints.length} MARCADORES</span>
+                            </div>
+                            {filteredPoints.map(poi => (
+                              <button
+                                key={`poi-${poi.id}`}
+                                onClick={() => {
+                                  setMapCenter([poi.lat, poi.lng]);
+                                  setMapZoom(17);
+                                  setSelectedPoint(poi);
+                                  setShowSuggestions(false);
+                                }}
+                                className="w-full flex items-center gap-3 p-3 hover:bg-white/[0.05] transition-colors border-b border-white/5 last:border-0 group/poi"
+                              >
+                                <div className="w-8 h-8 flex items-center justify-center bg-white/5 rounded-xs group-hover/poi:bg-[#ff641d]/20 transition-colors">
+                                  <MapPin size={12} className="text-white/20 group-hover/poi:text-[#ff641d]" />
+                                </div>
+                                <div className="flex-1 flex flex-col items-start min-w-0">
+                                   <span className="text-[9px] font-mono font-black text-white group-hover/poi:text-[#ff641d] transition-colors uppercase truncate w-full flex items-center gap-2 text-left shadow-none m-0 p-0 border-none bg-transparent">
+                                     {poi.name}
+                                     <span className="text-[6px] font-mono px-1 border border-white/10 text-white/20 rounded-2xs">{poi.category.toUpperCase()}</span>
+                                   </span>
+                                   <span className="text-[7px] font-mono text-white/20 uppercase tracking-tighter truncate w-full text-left">{poi.description || 'LOCAL_RECONHECIDO_SISTEMA'}</span>
+                                </div>
+                                <ArrowUpRight size={12} className="text-white/5 group-hover/poi:text-[#ff641d] transition-all" />
+                              </button>
+                            ))}
+                          </>
+                        )}
+
+                        {routeSuggestions.length === 0 && (filteredPoints.length === 0 || searchQuery.length < 2) && (
+                          <div className="p-8 text-center flex flex-col items-center gap-2">
+                             <Activity size={16} className="text-white/5" />
+                             <span className="text-[7px] font-mono text-white/20 uppercase tracking-[0.2em]">NENHUM_RESULTADO</span>
+                          </div>
+                        )}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
              </div>
-          </motion.div>
 
-          {/* Mode Controls Right (Minimal on PC, full on Mobile) */}
-          <div className="flex gap-2 pointer-events-auto self-end md:self-auto lg:hidden">
+             {/* Rotas Inteligentes / Saved Routes Button */}
+             <div className="relative hidden sm:block shrink-0">
+                <button 
+                  onClick={() => setShowRoutesMenu(!showRoutesMenu)}
+                  className={cn(
+                    "h-12 px-4 rounded-xs border flex items-center justify-center gap-2 transition-all font-mono font-black text-[9px] tracking-[0.2em] uppercase whitespace-nowrap",
+                    showRoutesMenu || selectedPreDefinedRoute 
+                      ? "bg-[#ff641d]/10 border-[#ff641d] text-[#ff641d] shadow-[0_0_15px_rgba(255,100,29,0.2)]" 
+                      : "bg-white/[0.02] border-white/5 text-white/20 hover:border-[#ff641d]/40 hover:text-white"
+                  )}
+                >
+                  <MapPin size={16} className={showRoutesMenu ? "animate-bounce" : ""} />
+                  <span className="hidden xl:inline">{selectedPreDefinedRoute ? selectedPreDefinedRoute.name : 'ROTAS_INTELIGENTES'}</span>
+                </button>
 
+                <AnimatePresence>
+                  {showRoutesMenu && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 10 }}
+                      className="absolute top-full right-0 mt-2 w-80 bg-[#0b0c0d]/98 backdrop-blur-3xl border border-[#ff641d]/30 rounded-sm overflow-hidden z-[5000] shadow-2xl"
+                    >
+                      <div className="p-3 border-b border-white/5 bg-[#ff641d]/5 flex justify-between items-center">
+                         <span className="text-[8px] font-mono text-[#ff641d] uppercase tracking-[0.3em] font-black">EXPEDIÇÕES_AMÉRICA_LATINA</span>
+                         {selectedPreDefinedRoute && (
+                           <button 
+                             onClick={(e) => {
+                               e.stopPropagation();
+                               handleClearRoute();
+                               setShowRoutesMenu(false);
+                             }}
+                             className="text-white/20 hover:text-red-500 transition-colors"
+                           >
+                             <Trash2 size={12} />
+                           </button>
+                         )}
+                      </div>
 
+                      <div className="max-h-[70vh] overflow-y-auto no-scrollbar">
+                         {offlineRoutes.map(route => (
+                           <button
+                             key={`offline-${route.id}`}
+                             onClick={() => { selectRoute(route as any); setShowRoutesMenu(false); }}
+                             className={cn(
+                               "w-full p-4 flex flex-col items-start gap-1 hover:bg-green-500/5 transition-colors border-b border-white/5 group text-left",
+                               selectedPreDefinedRoute?.id === route.id && "bg-green-500/5 border-l-2 border-l-green-500"
+                             )}
+                           >
+                             <div className="flex items-center gap-2">
+                               <Wifi size={8} className="text-green-500" />
+                               <span className={cn(
+                                 "text-[9px] font-mono font-black uppercase tracking-widest",
+                                 selectedPreDefinedRoute?.id === route.id ? "text-green-500" : "text-white/80 group-hover:text-green-500"
+                               )}>{route.name}</span>
+                             </div>
+                             <div className="flex items-center gap-4 w-full justify-between mt-1">
+                                <span className="text-[7px] font-mono text-white/30 uppercase">{route.country}</span>
+                                <div className="flex gap-2">
+                                   <Database size={10} className="text-green-500/40" />
+                                </div>
+                             </div>
+                           </button>
+                         ))}
+
+                         {routeSuggestions.map(route => (
+                           <button
+                             key={route.id}
+                             onClick={() => { selectRoute(route); setShowRoutesMenu(false); }}
+                             className={cn(
+                               "w-full p-4 flex flex-col items-start gap-1 hover:bg-[#ff641d]/10 transition-colors border-b border-white/5 group text-left",
+                               selectedPreDefinedRoute?.id === route.id && "bg-[#ff641d]/5 border-l-2 border-l-[#ff641d]"
+                             )}
+                           >
+                             <span className={cn(
+                               "text-[9px] font-mono font-black uppercase tracking-widest",
+                               selectedPreDefinedRoute?.id === route.id ? "text-[#ff641d]" : "text-white group-hover:text-[#ff641d]"
+                             )}>{route.name}</span>
+                             <div className="flex items-center gap-4 w-full justify-between mt-1">
+                                <div className="flex items-center gap-1">
+                                   <Globe size={10} className="text-white/20" />
+                                   <span className="text-[7px] font-mono text-white/40 uppercase">{route.country}</span>
+                                </div>
+                                <span className={cn(
+                                  "text-[6px] font-mono px-1.5 py-0.5 rounded-xs border uppercase",
+                                  route.difficulty === 'CRITICAL' ? "border-red-500/50 text-red-500" : "border-blue-500/50 text-blue-500"
+                                )}>{route.difficulty}</span>
+                             </div>
+                           </button>
+                         ))}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+             </div>
+          </div>
+
+          {/* Section 3: Status & Visual (Right on Desktop) */}
+          <div className="flex items-center gap-2 order-3 lg:order-3 self-stretch lg:self-auto ml-auto lg:ml-0">
+             {/* Integrated Heatmap Button */}
+             <button 
+               onClick={() => setShowHeatmap(!showHeatmap)}
+               className={cn(
+                 "h-10 px-4 rounded-xs border flex items-center justify-center gap-2 transition-all shrink-0",
+                 showHeatmap 
+                  ? "bg-[#ff641d] border-[#ff641d] text-white shadow-[0_0_15px_rgba(255,100,29,0.5)]" 
+                  : "bg-white/5 border-white/5 text-white/40 hover:border-white/20 hover:text-white"
+               )}
+               title="MAPA_DE_CALOR"
+             >
+               <Activity size={16} />
+               <span className="text-[8px] font-mono font-black uppercase tracking-tighter hidden xl:inline">TÉRMICO</span>
+             </button>
+
+             <div className="w-[1px] h-4 bg-white/10 mx-1 hidden lg:block" />
+
+             {/* LIVE_NAV Status Compact */}
              <button 
                onClick={() => setIsExpeditionMode(!isExpeditionMode)}
                className={cn(
-                 "h-14 px-5 rounded-sm font-mono font-black text-[10px] uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-2 border shadow-2xl overflow-hidden relative group",
+                 "h-10 px-4 rounded-xs border flex items-center gap-3 transition-all font-mono font-black text-[9px] tracking-[0.2em] uppercase shrink-0 min-w-[120px]",
                  isExpeditionMode 
-                   ? "bg-[#ff641d] border-[#ff641d] text-white" 
-                   : "bg-black/80 border-white/10 text-white/40 hover:border-[#ff641d]/40"
+                  ? "bg-[#ff641d]/10 border-[#ff641d] text-[#ff641d]" 
+                  : "bg-white/5 border-white/5 text-white/20 hover:border-white/20"
                )}
              >
-               <Zap size={14} className={isExpeditionMode ? "animate-pulse" : ""} /> 
-               <span>{isExpeditionMode ? "NAV_ON" : "NAV"}</span>
+               <div className={cn(
+                 "w-2 h-2 rounded-full",
+                 isExpeditionMode ? "bg-green-500 animate-pulse shadow-[0_0_8px_#22c55e]" : "bg-white/10"
+               )} />
+               <span className="truncate">LIVE_NAV {isExpeditionMode ? 'ACTIVE' : 'OFF'}</span>
              </button>
-             
-             <div className="flex bg-black/80 backdrop-blur-md border border-white/10 rounded-sm p-1 max-w-[200px] sm:max-w-none">
-                <button 
-                   onClick={() => window.history.back()}
-                   className="px-2 flex items-center justify-center rounded-xs transition-all text-white/40 hover:bg-white/5 border-r border-white/5"
-                   title="VOLTAR"
-                >
-                  <ArrowUpRight size={16} className="rotate-[225deg]" />
-                </button>
-                <div className="flex gap-1 overflow-x-auto no-scrollbar scroll-smooth px-1">
-                  {[
-                    { id: 'bike', icon: Bike, label: 'BIKE' },
-                    { id: 'moto', icon: Zap, label: 'MOTO' },
-                    { id: 'car', icon: Car, label: 'CARRO' },
-                    { id: 'walk', icon: MapPin, label: 'PÉ' }
-                  ].map((mode) => (
-                    <button 
-                      key={mode.id}
-                      onClick={() => setTransportMode(mode.id as any)}
-                      className={cn(
-                        "flex flex-col items-center justify-center min-w-[40px] sm:min-w-[50px] h-12 rounded-xs transition-all shrink-0 relative",
-                        transportMode === mode.id ? "bg-[#ff641d] text-white" : "text-white/20"
-                      )}
-                    >
-                      <mode.icon size={14} />
-                    </button>
-                  ))}
-                </div>
-             </div>
           </div>
         </div>
 
-        {/* Central HUD Row: Search & Metrics - Only on Desktop in this position */}
-        <div className="lg:flex hidden flex-col items-center gap-4 w-full pointer-events-auto p-4 lg:p-0">
-           {/* Central Prominent Search Bar / Routing Panel */}
-           <div className="w-full max-w-2xl flex flex-col gap-2">
-              <div className="flex gap-2">
-                <button 
-                  onClick={() => setShowFilters(!showFilters)}
-                  className={cn(
-                    "w-14 h-14 bg-black/80 backdrop-blur-md border rounded-sm flex items-center justify-center transition-all lg:flex hidden",
-                    showFilters ? "border-[#ff641d] text-[#ff641d] shadow-[0_0_20px_rgba(255,100,29,0.3)]" : "border-white/10 text-white/20 hover:border-[#ff641d]/40"
-                  )}
-                >
-                  <Filter size={18} />
-                </button>
-
-                <div className="relative">
-                  <button 
-                    onClick={() => setShowRoutesMenu(!showRoutesMenu)}
-                    className={cn(
-                      "h-14 px-6 bg-black/80 backdrop-blur-md border rounded-sm flex items-center justify-center gap-2 transition-all font-mono font-black text-[10px] tracking-[0.2em] uppercase whitespace-nowrap",
-                      showRoutesMenu || selectedPreDefinedRoute ? "border-[#ff641d] text-[#ff641d] shadow-[0_0_20px_rgba(255,100,29,0.3)]" : "border-white/10 text-white/20 hover:border-[#ff641d]/40 hover:text-white"
-                    )}
-                  >
-                    <MapPin size={18} className={showRoutesMenu ? "animate-bounce" : ""} />
-                    <span>{selectedPreDefinedRoute ? selectedPreDefinedRoute.name : 'ROTAS_INTELIGENTES'}</span>
-                  </button>
-
-                  <AnimatePresence>
-                    {showRoutesMenu && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: 10 }}
-                        className="absolute bottom-full left-0 mb-2 w-72 bg-[#0b0c0d]/95 backdrop-blur-3xl border border-[#ff641d]/30 rounded-sm overflow-hidden z-[4000] shadow-2xl"
-                      >
-                        <div className="p-3 border-b border-white/5 bg-[#ff641d]/5 flex justify-between items-center">
-                           <span className="text-[8px] font-mono text-[#ff641d] uppercase tracking-[0.3em] font-black">EXPEDIÇÕES_AMÉRICA_LATINA</span>
-                           {selectedPreDefinedRoute && (
-                             <button 
-                               onClick={(e) => {
-                                 e.stopPropagation();
-                                 handleClearRoute();
-                                 setShowRoutesMenu(false);
-                               }}
-                               className="text-white/20 hover:text-red-500 transition-colors"
-                             >
-                               <Trash2 size={12} />
-                             </button>
-                           )}
-                        </div>
-
-                        {/* Filters in Route Menu */}
-                        <div className="p-4 border-b border-white/5 space-y-4 bg-black/40">
-                           <div className="space-y-2">
-                              <div className="flex items-center justify-between">
-                                 <label className="text-[7px] font-mono text-white/20 uppercase tracking-[0.2em] block">DIFICULDADE</label>
-                                 <span className="text-[6px] font-mono text-[#ff641d]">{difficultyFilter.toUpperCase()}</span>
-                              </div>
-                              <div className="grid grid-cols-4 gap-1">
-                                 {[
-                                   { id: 'all', icon: Filter },
-                                   { id: 'LOW', icon: MapIcon },
-                                   { id: 'MODERATE', icon: Mountain },
-                                   { id: 'CRITICAL', icon: ShieldAlert }
-                                 ].map(dif => (
-                                   <button 
-                                     key={dif.id}
-                                     onClick={() => setDifficultyFilter(dif.id)}
-                                     className={cn(
-                                       "p-2 border rounded-xs transition-all flex items-center justify-center",
-                                       difficultyFilter === dif.id ? "border-[#ff641d] bg-[#ff641d]/10 text-[#ff641d]" : "border-white/10 text-white/20 hover:text-white"
-                                     )}
-                                   >
-                                     <dif.icon size={10} />
-                                   </button>
-                                 ))}
-                              </div>
-                           </div>
-
-                           <div className="space-y-2">
-                              <div className="flex items-center justify-between">
-                                 <label className="text-[7px] font-mono text-white/20 uppercase tracking-[0.2em] block">VEÍCULO</label>
-                                 <span className="text-[6px] font-mono text-[#ff641d]">{vehicleFilter.toUpperCase()}</span>
-                              </div>
-                              <div className="grid grid-cols-4 gap-1">
-                                 {[
-                                   { id: 'all', icon: Activity },
-                                   { id: 'bike', icon: Bike },
-                                   { id: 'moto', icon: Navigation2 },
-                                   { id: 'overland', icon: Truck }
-                                 ].map(v => (
-                                   <button 
-                                     key={v.id}
-                                     onClick={() => setVehicleFilter(v.id)}
-                                     className={cn(
-                                       "p-2 border rounded-xs transition-all flex items-center justify-center",
-                                       vehicleFilter === v.id ? "border-[#ff641d] bg-[#ff641d]/10 text-[#ff641d]" : "border-white/10 text-white/20 hover:text-white"
-                                     )}
-                                   >
-                                     <v.icon size={10} />
-                                   </button>
-                                 ))}
-                              </div>
-                           </div>
-
-                           <div className="space-y-2">
-                              <label className="text-[7px] font-mono text-white/20 uppercase tracking-[0.2em] block">PAÍS</label>
-                              <div className="relative">
-                                 <Globe size={10} className="absolute left-2 top-1/2 -translate-y-1/2 text-white/20" />
-                                 <select 
-                                   value={countryFilter}
-                                   onChange={(e) => setCountryFilter(e.target.value)}
-                                   className="w-full bg-white/[0.03] border border-white/10 rounded-xs py-1.5 pl-7 pr-2 text-[8px] font-mono text-white/60 outline-none focus:border-[#ff641d]/40 transition-all uppercase appearance-none"
-                                 >
-                                    <option value="all">BR+ARG+CH+GF</option>
-                                    {countries.map(c => (
-                                       <option key={c} value={c}>{c}</option>
-                                    ))}
-                                 </select>
-                                 <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-white/10">
-                                    <Triangle size={4} className="rotate-180" />
-                                 </div>
-                              </div>
-                           </div>
-                        </div>
-
-                        <div className="max-h-[400px] overflow-y-auto no-scrollbar">
-                           {/* Offline Routes Section */}
-                           {offlineRoutes.length > 0 && (
-                             <div className="border-b border-white/5">
-                               <div className="p-2 bg-green-500/5 flex items-center justify-between">
-                                 <span className="text-[7px] font-mono text-green-500 uppercase tracking-[0.3em] font-black">LOCAL_OFFLINE_SAVED</span>
-                               </div>
-                               {offlineRoutes.map(route => (
-                                 <button
-                                   key={`offline-${route.id}`}
-                                   onClick={() => selectRoute(route as any)}
-                                   className={cn(
-                                     "w-full p-4 flex flex-col items-start gap-1 hover:bg-green-500/5 transition-colors border-b border-white/5 group text-left relative",
-                                     selectedPreDefinedRoute?.id === route.id && "bg-green-500/5 border-l-2 border-l-green-500"
-                                   )}
-                                 >
-                                   <div className="flex items-center gap-2">
-                                     <Wifi size={8} className="text-green-500" />
-                                     <span className={cn(
-                                       "text-[10px] font-mono font-black uppercase tracking-widest",
-                                       selectedPreDefinedRoute?.id === route.id ? "text-green-500" : "text-white/80 group-hover:text-green-500"
-                                     )}>{route.name}</span>
-                                   </div>
-                                   <div className="flex items-center gap-4 w-full justify-between">
-                                      <div className="flex items-center gap-1">
-                                         <span className="text-[8px] font-mono text-white/30 uppercase">{route.country}</span>
-                                      </div>
-                                      <div className="flex items-center gap-2">
-                                         <button
-                                           onClick={(e) => { e.stopPropagation(); exportToGPX(route as any); }}
-                                           className="p-1.5 text-white/20 hover:text-white transition-all"
-                                           title="EXPORTAR_GPX"
-                                         >
-                                           <ArrowUpRight size={10} className="rotate-45" />
-                                         </button>
-                                         <button
-                                           onClick={(e) => handleRemoveOfflineRoute(e, route.id)}
-                                           className="p-1.5 text-white/20 hover:text-red-500 transition-all"
-                                           title="REMOVER_OFFLINE"
-                                         >
-                                           <Trash2 size={10} />
-                                         </button>
-                                      </div>
-                                   </div>
-                                 </button>
-                               ))}
-                             </div>
-                           )}
-
-                           {routeSuggestions.map(route => (
-                             <button
-                               key={route.id}
-                               onClick={() => selectRoute(route)}
-                               className={cn(
-                                 "w-full p-4 flex flex-col items-start gap-1 hover:bg-[#ff641d]/10 transition-colors border-b border-white/5 group text-left",
-                                 selectedPreDefinedRoute?.id === route.id && "bg-[#ff641d]/5 border-l-2 border-l-[#ff641d]"
-                               )}
-                             >
-                               <span className={cn(
-                                 "text-[10px] font-mono font-black uppercase tracking-widest",
-                                 selectedPreDefinedRoute?.id === route.id ? "text-[#ff641d]" : "text-white group-hover:text-[#ff641d]"
-                               )}>{route.name}</span>
-                               <div className="flex items-center gap-4 w-full justify-between">
-                                  <div className="flex items-center gap-1">
-                                     <Globe size={10} className="text-white/20" />
-                                     <span className="text-[8px] font-mono text-white/40 uppercase">{route.country}</span>
-                                  </div>
-                                  <div className="flex items-center gap-2">
-                                     <button
-                                       onClick={(e) => handleDownloadRoute(e, route)}
-                                       className={cn(
-                                         "p-1.5 rounded-xs transition-all",
-                                         offlineRoutes.some(or => or.id === route.id) 
-                                           ? "text-green-500 bg-green-500/10" 
-                                           : "text-white/20 hover:text-white"
-                                       )}
-                                       title="BAIXAR_OFFLINE"
-                                     >
-                                       <Database size={10} className={downloadingRoutes.has(route.id) ? "animate-bounce" : ""} />
-                                     </button>
-                                     <button
-                                       onClick={(e) => { e.stopPropagation(); exportToGPX(route as any); }}
-                                       className="p-1.5 text-white/20 hover:text-white transition-all rounded-xs"
-                                       title="EXPORTAR_GPX"
-                                     >
-                                       <ArrowUpRight size={10} className="rotate-45" />
-                                     </button>
-                                     <span className={cn(
-                                       "text-[7px] font-mono px-2 py-0.5 rounded-xs border uppercase",
-                                       route.difficulty === 'CRITICAL' ? "border-red-500/50 text-red-500" : "border-blue-500/50 text-blue-500"
-                                     )}>{route.difficulty}</span>
-                                  </div>
-                               </div>
-                             </button>
-                           ))}
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-
-                {!isRoutingExpanded ? (
-                  <div className="relative group flex-1">
-                    <AnimatePresence>
-                      {(isDiscoveringPOIs || isCalculatingRoute) && (
-                        <motion.div 
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: 20 }}
-                          className="absolute -top-16 left-1/2 -translate-x-1/2 z-[3000] bg-black/90 backdrop-blur-3xl border border-cyan-500/20 px-4 py-2 rounded-full flex items-center gap-3 shadow-2xl min-w-max"
-                        >
-                          <div className={cn(
-                            "w-2 h-2 rounded-full animate-ping",
-                            isCalculatingRoute ? "bg-[#ff641d]" : "bg-cyan-400"
-                          )} />
-                          <span className={cn(
-                            "text-[8px] font-mono uppercase tracking-[0.3em]",
-                            isCalculatingRoute ? "text-[#ff641d]" : "text-cyan-400"
-                          )}>
-                             {isCalculatingRoute ? "SINC_ESTRADAS_REALISTAS..." : "DESCOBRINDO_RECURSOS_OSM..."}
-                          </span>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                    <form onSubmit={handleSearch} className="relative z-10">
-             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-[#ff641d] transition-colors" size={18} />
-             <input 
-               type="text" 
-               placeholder="PESQUISAR_ROTA_PAIS_OU_PONTO..."
-               value={searchQuery}
-               onChange={(e) => {
-                 setSearchQuery(e.target.value);
-                 setShowSuggestions(true);
-               }}
-               onFocus={() => setShowSuggestions(true)}
-               className="w-full bg-black/90 backdrop-blur-2xl border border-white/10 rounded-sm h-14 pl-12 pr-12 text-[11px] font-mono tracking-[0.2em] focus:outline-none focus:border-[#ff641d] transition-all text-white placeholder:text-white/10 shadow-[0_10px_40px_rgba(0,0,0,0.5)] uppercase"
-             />
-             <div className="absolute right-4 top-1/2 -translate-y-1/2 flex gap-3 items-center">
-               <button 
-                 type="button"
-                 onClick={() => setIsRoutingExpanded(true)}
-                 className="p-2 text-white/20 hover:text-[#ff641d] transition-colors"
-                 title="MODO_ROTA"
-               >
-                 <Navigation size={18} />
-               </button>
-               {isSearching && <div className="w-4 h-4 border-2 border-[#ff641d]/20 border-t-[#ff641d] rounded-full animate-spin" />}
-             </div>
-          </form>
-
-          {/* Search Suggestions Dropdown */}
-          <AnimatePresence>
-            {showSuggestions && (searchQuery.length >= 2 || (routeSuggestions.length > 0 && searchQuery.length >= 0)) && (
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                className="absolute top-full left-0 right-0 mt-2 bg-[#0b0c0d]/95 backdrop-blur-2xl border border-[#ff641d]/20 rounded-sm overflow-hidden z-[3000] shadow-[0_20px_50px_rgba(0,0,0,0.8)]"
-              >
-                <div className="p-2 border-b border-white/5 bg-white/[0.02] flex justify-between items-center">
-                  <span className="text-[7px] font-mono text-white/20 uppercase tracking-[0.3em]">ROTAS_TACTICAS_ENCONTRADAS</span>
-                  {routeSuggestions.length > 0 && (
-                    <span className="text-[7px] font-mono text-[#ff641d]/60 uppercase tracking-widest">{routeSuggestions.length} RESULTADOS</span>
-                  )}
-                </div>
-                <div className="max-h-60 overflow-y-auto no-scrollbar">
-                  {routeSuggestions.length > 0 ? (
-                    routeSuggestions.map(route => (
-                      <div key={route.id} className="flex items-center justify-between p-4 hover:bg-[#ff641d]/10 transition-colors border-b border-white/5 last:border-0 group/item">
-                        <button
-                          onClick={() => selectRoute(route)}
-                          className="flex-1 flex items-center justify-between text-left"
-                        >
-                          <div className="flex flex-col items-start gap-1">
-                            <span className="text-[10px] font-mono font-black text-white group-hover/item:text-[#ff641d] uppercase tracking-widest transition-colors">{route.name}</span>
-                            <div className="flex items-center gap-2">
-                               <Globe size={10} className="text-[#ff641d]/60" />
-                               <span className="text-[8px] font-mono text-white/40 uppercase tracking-widest">{route.country}</span>
-                            </div>
-                          </div>
-                          <div className="flex flex-col items-end gap-1 mr-4">
-                            <div className={`text-[7px] font-mono px-2 py-0.5 rounded-xs border ${
-                              route.difficulty === 'CRITICAL' ? 'border-red-500/50 text-red-500' : 'border-blue-500/50 text-blue-500'
-                            }`}>
-                              {route.difficulty}
-                            </div>
-                          </div>
-                        </button>
-                        
-                        <button 
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            toggleFavoriteRoute(route);
-                          }}
-                          className={cn(
-                             "p-2 rounded-full transition-all shrink-0",
-                             savedRouteIds.includes(route.id) ? "text-red-500 bg-red-500/10" : "text-white/20 hover:text-red-500 hover:bg-white/5"
-                          )}
-                          title={savedRouteIds.includes(route.id) ? "REMOVER_FAVORITO" : "SALVAR_FAVORITO"}
-                        >
-                           <Heart size={16} fill={savedRouteIds.includes(route.id) ? "currentColor" : "none"} />
-                        </button>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="p-10 text-center flex flex-col items-center gap-3">
-                       <Activity size={24} className="text-white/5 animate-pulse" />
-                       <span className="text-[8px] font-mono text-white/20 uppercase tracking-[0.3em]">NENHUMA_ROTA_INTELIGENTE_ENCONTRADA_COM_FILTROS_ATIVOS</span>
-                    </div>
-                  )}
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-      ) : (
-                <motion.div 
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="bg-black/90 backdrop-blur-2xl border border-[#ff641d]/30 rounded-sm p-4 shadow-[0_10px_60px_rgba(255,100,29,0.2)]"
-                >
-                   <div className="flex items-center justify-between mb-4 px-1">
+        {/* Global Advance Tactic Filter Panel (Dropdown below the bar) */}
+        <AnimatePresence>
+          {showFilters && (
+            <motion.div
+              initial={{ height: 0, opacity: 0, y: -10 }}
+              animate={{ height: 'auto', opacity: 1, y: 0 }}
+              exit={{ height: 0, opacity: 0, y: -10 }}
+              className="w-full max-w-7xl bg-black/90 backdrop-blur-3xl border border-white/10 overflow-hidden rounded-sm pointer-events-auto shadow-2xl relative z-[1900]"
+            >
+                <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-8">
+                  {/* Difficulty Filter */}
+                  <div className="space-y-4">
                       <div className="flex items-center gap-2">
-                         <Navigation className="text-[#ff641d]" size={14} />
-                         <span className="text-[9px] font-mono font-black text-white/60 tracking-[0.3em]">TACTICAL_ROUTING_PRO</span>
+                        <Activity size={12} className="text-[#ff641d]" />
+                        <label className="text-[9px] font-mono text-white/40 uppercase tracking-widest font-black">NÍVEL_DIFICULDADE</label>
                       </div>
-                      <button onClick={() => setIsRoutingExpanded(false)} className="text-white/20 hover:text-white transition-colors">
-                        <Plus size={16} className="rotate-45" />
-                      </button>
-                   </div>
-                   
-                   <form onSubmit={handleRoutingSearch} className="space-y-3">
-                      <div className="relative">
-                        <div className="absolute left-4 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full border border-[#ff641d] bg-[#ff641d]/20"></div>
-                        <input 
-                          type="text" 
-                          placeholder="PONTO_A (ORIGEM)"
-                          value={originQuery}
-                          onChange={(e) => setOriginQuery(e.target.value)}
-                          className="w-full bg-white/[0.03] border border-white/5 rounded-xs h-12 pl-10 pr-4 text-[10px] font-mono tracking-widest focus:outline-none focus:border-[#ff641d]/50 text-white placeholder:text-white/10 uppercase"
-                        />
+                      <div className="grid grid-cols-2 gap-2">
+                        {['all', 'LOW', 'MODERATE', 'CRITICAL'].map(dif => (
+                            <button 
+                              key={dif}
+                              onClick={() => setDifficultyFilter(dif)}
+                              className={cn(
+                                "h-10 text-[8px] font-mono font-bold uppercase tracking-widest border rounded-xs transition-all",
+                                difficultyFilter === dif ? "bg-[#ff641d] border-[#ff641d] text-white" : "bg-white/5 border-white/10 text-white/40 hover:border-white/20"
+                              )}
+                            >
+                              {dif === 'all' ? 'TODOS_OS_NÍVEIS' : dif === 'LOW' ? 'INICIANTE' : dif === 'MODERATE' ? 'MÉDIO' : 'CRÍTICO'}
+                            </button>
+                        ))}
                       </div>
-                      
-                      <div className="flex justify-center -my-2 relative z-10">
-                         <div className="w-px h-4 bg-white/10"></div>
-                      </div>
+                  </div>
 
-                      <div className="relative">
-                        <MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#ff641d]" size={14} />
-                        <input 
-                          type="text" 
-                          placeholder="PONTO_B (DESTINO)"
-                          value={destinationQuery}
-                          onChange={(e) => setDestinationQuery(e.target.value)}
-                          className="w-full bg-white/[0.03] border border-white/5 rounded-xs h-12 pl-10 pr-4 text-[10px] font-mono tracking-widest focus:outline-none focus:border-[#ff641d]/50 text-white placeholder:text-white/10 uppercase"
-                        />
+                  {/* Vehicle Filter */}
+                  <div className="space-y-4">
+                      <div className="flex items-center gap-2">
+                        <Zap size={12} className="text-cyan-400" />
+                        <label className="text-[9px] font-mono text-white/40 uppercase tracking-widest font-black">SISTEMA_TRAÇÃO</label>
                       </div>
-
-                      <button 
-                        type="submit"
-                        disabled={isCalculatingRoute || !originQuery || !destinationQuery}
-                        className="w-full h-12 bg-[#ff641d] hover:bg-white text-white hover:text-[#ff641d] transition-all text-[9px] font-mono font-black uppercase tracking-[0.3em] flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed mt-2"
-                      >
-                         {isCalculatingRoute ? (
-                           <>
-                             <div className="w-3 h-3 border border-white/20 border-t-white rounded-full animate-spin" />
-                             CÁLCULO_ATIVO...
-                           </>
-                         ) : (
-                           <>
-                             <ArrowUpRight size={14} /> GERAR_TRAJETÓRIA_TÁTICA
-                           </>
-                         )}
-                      </button>
-                   </form>
-                </motion.div>
-              )}
-           </div>
-        </div>
-
-        {/* Advance Tactic Filter Panel */}
-           <AnimatePresence>
-              {showFilters && (
-                <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: 'auto', opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  className="w-full max-w-2xl bg-black/80 backdrop-blur-3xl border border-white/10 overflow-hidden rounded-sm pointer-events-auto"
-                >
-                    <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
-                      {/* Difficulty Filter */}
-                      <div>
-                          <label className="text-[9px] font-mono text-white/20 uppercase tracking-widest mb-3 block">DIFICULDADE</label>
-                          <div className="flex flex-wrap gap-2">
-                            {['all', 'LOW', 'MODERATE', 'CRITICAL'].map(dif => (
-                                <button 
-                                  key={dif}
-                                  onClick={() => setDifficultyFilter(dif)}
-                                  className={cn(
-                                    "px-3 py-1.5 text-[8px] font-mono font-bold uppercase tracking-widest border rounded-xs transition-all",
-                                    difficultyFilter === dif ? "bg-[#ff641d] border-[#ff641d] text-white" : "bg-white/5 border-white/10 text-white/40 hover:border-white/20"
-                                  )}
-                                >
-                                  {dif === 'all' ? 'TODAS' : dif === 'LOW' ? 'FÁCIL' : dif === 'MODERATE' ? 'MÉDIO' : 'CRÍTICO'}
-                                </button>
-                            ))}
-                          </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        {['all', 'bike', 'moto', 'overland'].map(v => (
+                            <button 
+                              key={v}
+                              onClick={() => setVehicleFilter(v)}
+                              className={cn(
+                                "h-10 text-[8px] font-mono font-bold uppercase tracking-widest border rounded-xs transition-all",
+                                vehicleFilter === v ? "bg-cyan-500/20 border-cyan-500 text-cyan-400" : "bg-white/5 border-white/10 text-white/40 hover:border-white/20"
+                              )}
+                            >
+                              {v === 'all' ? 'PADRÃO_NAV' : v.toUpperCase()}
+                            </button>
+                        ))}
                       </div>
+                  </div>
 
-                      {/* Vehicle Filter */}
-                      <div>
-                          <label className="text-[9px] font-mono text-white/20 uppercase tracking-widest mb-3 block">TIPO_VEÍCULO</label>
-                          <div className="flex flex-wrap gap-2">
-                            {['all', 'bike', 'moto', 'overland'].map(v => (
-                                <button 
-                                  key={v}
-                                  onClick={() => setVehicleFilter(v)}
-                                  className={cn(
-                                    "px-3 py-1.5 text-[8px] font-mono font-bold uppercase tracking-widest border rounded-xs transition-all",
-                                    vehicleFilter === v ? "bg-[#ff641d] border-[#ff641d] text-white" : "bg-white/5 border-white/10 text-white/40 hover:border-white/20"
-                                  )}
-                                >
-                                  {v === 'all' ? 'PADRÃO' : v.toUpperCase()}
-                                </button>
-                            ))}
-                          </div>
+                  {/* Country Filter */}
+                  <div className="space-y-4">
+                      <div className="flex items-center gap-2">
+                        <Globe size={12} className="text-blue-400" />
+                        <label className="text-[9px] font-mono text-white/40 uppercase tracking-widest font-black">REGIÃO_DE_OPERAÇÃO</label>
                       </div>
-
-                      {/* Country Filter */}
-                      <div>
-                          <label className="text-[9px] font-mono text-white/20 uppercase tracking-widest mb-3 block">PAÍS</label>
-                          <select 
-                            value={countryFilter}
-                            onChange={(e) => setCountryFilter(e.target.value)}
-                            className="w-full bg-white/5 border border-white/10 rounded-xs p-2 text-[10px] font-mono text-white outline-none focus:border-[#ff641d]/50"
+                      <select 
+                        value={countryFilter}
+                        onChange={(e) => setCountryFilter(e.target.value)}
+                        className="w-full h-12 bg-white/5 border border-white/10 rounded-xs px-4 text-[10px] font-mono text-white outline-none focus:border-[#ff641d]/50 appearance-none cursor-pointer"
                           >
                             <option value="all">TODOS_PAÍSES</option>
                             {countries.map(c => (
@@ -3943,8 +3776,7 @@ export default function AdventureMap() {
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
       `}} />
-      </div>
-
+      
       {/* --- AI TACTICAL INTELLIGENCE PANEL (OVERLAY) --- */}
       <AnimatePresence>
         {showAIPanel && (
