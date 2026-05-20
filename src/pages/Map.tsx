@@ -14,7 +14,7 @@ import {
   Share2, Ruler, Trash2, Radio, UserPlus, Link as LinkIcon, Wind, Thermometer, Send,
   Cloud, Sun, CloudRain, Database, Heart, Cpu, Minimize2, Maximize2,
   Mountain, Clock, Info, ShieldAlert, Wifi, Battery, Eye, Activity, Car, Truck,
-  Map as MapIcon, ChevronLeft, ChevronRight, X, Menu
+  Map as MapIcon, ChevronLeft, ChevronRight, X, Menu, MoreVertical
 } from 'lucide-react';
 import PointPanelV2 from '@/src/components/PointPanelV2';
 import WeatherWidget from '@/src/components/WeatherWidget';
@@ -2249,7 +2249,7 @@ export default function AdventureMap() {
   }, [selectedCategory, searchQuery, autoDiscoveredPoints]);
 
   return (
-    <div className="h-screen bg-[#0b0c0d] flex flex-col lg:flex-row overflow-y-auto lg:overflow-hidden isolate relative no-scrollbar">
+    <div className="h-auto lg:h-[calc(100vh-96px)] bg-[#0b0c0d] flex flex-col lg:flex-row overflow-hidden isolate relative no-scrollbar">
       <SEO title="Tactical GPS Explorer — Atlas do Aventureiro" description="Sistema de navegação tática para expedições independentes." />
       
       {/* Mobile Sidebar Overlay */}
@@ -2267,11 +2267,13 @@ export default function AdventureMap() {
 
       {/* --- TACTICAL SIDEBAR (CONSOLIDATED) --- */}
       <aside ref={sidebarRef} className={cn(
-         "w-full lg:h-full lg:w-[420px] flex-shrink-0 flex flex-col bg-[#0b0c0d] z-[5000] border-t lg:border-t-0 lg:border-r border-white/10 relative shadow-[20px_0_60px_rgba(0,0,0,0.8)] overflow-hidden transition-all duration-300",
-         "static lg:static h-auto lg:h-full order-last lg:order-first",
+         "w-full lg:w-[420px] lg:h-full flex-shrink-0 flex flex-col bg-[#0b0c0d]/98 backdrop-blur-3xl lg:backdrop-blur-none z-[5000] border-t lg:border-t-0 lg:border-r border-white/10 overflow-hidden transition-all duration-300 shadow-[0_-15px_50px_rgba(0,0,0,0.9)] lg:shadow-[20px_0_60px_rgba(0,0,0,0.8)]",
+         "fixed inset-x-0 bottom-0 h-[75vh] rounded-t-2xl lg:rounded-none lg:static lg:h-full lg:order-first",
          !showSidebarMobile && "hidden lg:flex",
-         showSidebarMobile && "flex"
+         showSidebarMobile && "flex animate-in slide-in-from-bottom duration-300"
       )}>
+         {/* Drag Handle Mobile */}
+         <div className="lg:hidden w-12 h-1 bg-white/20 rounded-full mx-auto my-3 shrink-0" />
          {/* Close Button Mobile */}
          <button 
            onClick={() => setShowSidebarMobile(false)}
@@ -2954,7 +2956,7 @@ export default function AdventureMap() {
       </aside>
 
       {/* --- MAP MAIN VIEWPORT --- */}
-      <div className="w-full h-auto min-h-[55vh] lg:h-full relative flex flex-col flex-shrink-0 lg:flex-1 bg-[#0b0c0d] border-l lg:border-l border-white/5 isolate order-first lg:order-last">
+      <div className="w-full h-[75vh] lg:h-full relative flex flex-col lg:flex-1 bg-[#0b0c0d] border-l lg:border-l border-white/5 isolate order-first lg:order-last overflow-hidden lg:overflow-visible">
           {/* Real-Time GPS Tracking Widget */}
           <GPSTracker 
             className="absolute bottom-6 right-6 z-[3500] hidden lg:block"
@@ -2968,7 +2970,7 @@ export default function AdventureMap() {
             }}
           />
           <GPSTracker 
-            className="absolute top-[calc(55vh-48px)] right-[60px] z-[3500] lg:hidden"
+            className="absolute bottom-28 left-4 z-[3700] lg:hidden"
             isSharing={isSharing}
             onToggleSharing={setIsSharing}
             isSignedIn={isSignedIn}
@@ -2980,7 +2982,7 @@ export default function AdventureMap() {
           />
 
           {/* --- MAP CORE (Layer 0) --- */}
-          <div className="relative lg:absolute h-[55vh] lg:h-auto lg:inset-0 z-0 w-full">
+          <div className="relative flex-1 min-h-0 lg:absolute lg:inset-0 z-0 w-full">
             <MapContainer 
               center={mapCenter} 
               zoom={mapZoom} 
@@ -3124,6 +3126,134 @@ export default function AdventureMap() {
             </MapContainer>
           </div>
 
+          <div 
+            className="lg:hidden w-full bg-[#0b0c0d]/95 backdrop-blur-md border-t border-white/10 px-4 py-2 flex flex-col gap-2 shrink-0 z-[3600] shadow-[0_-10px_35px_rgba(0,0,0,0.8)]"
+          >
+             {/* Categories / Pin Filters Row */}
+             <div className="flex flex-col gap-1">
+                <span className="text-[7px] font-mono text-[#ff641d] uppercase font-black tracking-widest px-0.5">FILTRO_PINS</span>
+                <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+                   {categories.map(cat => (
+                     <button
+                       key={cat.id}
+                       onClick={() => setSelectedCategory(cat.id)}
+                       className={cn(
+                         "px-3 py-1.5 rounded-xs border backdrop-blur-md transition-all flex items-center gap-1.5 shrink-0 text-[9px] font-mono uppercase font-black tracking-widest leading-none h-8",
+                         selectedCategory === cat.id 
+                           ? "bg-[#ff641d] border-[#ff641d] text-white shadow-[0_0_12px_rgba(255,100,29,0.4)]" 
+                           : "bg-white/[0.02] border-white/5 text-white/40 hover:border-[#ff641d]/20 hover:bg-white/[0.05]"
+                       )}
+                     >
+                       <cat.icon size={10} className={cn(selectedCategory === cat.id ? "text-white animate-pulse" : "text-white/30")} />
+                       <span>{cat.name.toUpperCase()}</span>
+                     </button>
+                   ))}
+                </div>
+             </div>
+
+             {/* Actions Scroll Row */}
+             <div className="flex flex-col gap-1 border-t border-white/5 pt-1.5">
+                <span className="text-[7px] font-mono text-[#ff641d] uppercase font-black tracking-widest px-0.5">ACOES_SISTEMA</span>
+                <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+                   {/* TACTICAL MENU ACTION */}
+                   <button 
+                     onClick={() => {
+                       setShowSidebarMobile(true);
+                       setTimeout(() => {
+                         sidebarRef.current?.scrollIntoView({ behavior: 'smooth' });
+                       }, 100);
+                     }}
+                     className={cn(
+                       "h-8 px-3 bg-white/[0.02] border rounded-xs transition-all flex items-center gap-1.5 shrink-0 text-[8px] font-mono font-black uppercase tracking-widest",
+                       showSidebarMobile ? "border-[#ff641d] text-[#ff641d] bg-[#ff641d]/10 animate-pulse" : "border-[#ff641d]/30 text-[#ff641d]"
+                     )}
+                   >
+                     <Menu size={11} />
+                     <span>PAINEL_TÁTICO</span>
+                   </button>
+
+                   {/* LOCATE VETOR */}
+                   <button 
+                     onClick={handleLocateUser} 
+                     className="h-8 px-3 bg-white/[0.02] border border-white/5 text-white/40 hover:text-[#ff641d]/80 rounded-xs transition-all flex items-center gap-1.5 shrink-0 text-[8px] font-mono font-black uppercase tracking-widest"
+                   >
+                     <LocateFixed size={11} className="text-[#ff641d]" />
+                     <span>MEU_VETOR</span>
+                   </button>
+
+                   {/* TRACING DETECT */}
+                   <button 
+                     onClick={() => setIsTracing(!isTracing)}
+                     className={cn(
+                       "h-8 px-3 border rounded-xs transition-all flex items-center gap-1.5 shrink-0 text-[8px] font-mono font-black uppercase tracking-widest",
+                       isTracing ? "bg-[#ff641d] border-[#ff641d] text-white shadow-[0_0_12px_rgba(255,100,29,0.4)]" : "bg-white/[0.02] border-white/5 text-white/40 hover:border-white/20"
+                     )}
+                   >
+                     <Ruler size={11} className={isTracing ? "text-white" : "text-white/30"} />
+                     <span>TRAÇAR_ROTA</span>
+                   </button>
+
+                   {/* COMPARTILHAMENTO */}
+                   <button 
+                     onClick={() => {
+                       setShowShareMenu(!showShareMenu);
+                     }} 
+                     className={cn(
+                       "h-8 px-3 border rounded-xs transition-all flex items-center gap-1.5 shrink-0 text-[8px] font-mono font-black uppercase tracking-widest", 
+                       showShareMenu 
+                         ? "bg-[#ff641d] border-[#ff641d] text-white shadow-[0_0_12px_rgba(255,100,29,0.4)]" 
+                         : (routePoints.length > 0 || !!selectedPreDefinedRoute)
+                           ? "bg-black/80 border-[#ff641d]/50 text-[#ff641d] animate-pulse"
+                           : "bg-white/[0.02] border-white/5 text-white/40 hover:border-white/25"
+                     )}
+                   >
+                     <Share2 size={11} className="text-[#ff641d]" />
+                     <span>COMPARTILHAR</span>
+                   </button>
+
+                   {/* TRACKING LIVE / MONITORAMENTO */}
+                   <button 
+                     onClick={() => setIsSharing(!isSharing)} 
+                     className={cn(
+                       "h-8 px-3 border rounded-xs transition-all flex items-center gap-1.5 shrink-0 text-[8px] font-mono font-black uppercase tracking-widest", 
+                       isSharing ? "bg-blue-500 border-blue-400 animate-pulse text-white shadow-[0_0_12px_rgba(59,130,246,0.4)]" : "bg-white/[0.02] border-white/5 text-white/20 hover:border-blue-500/25"
+                     )}
+                   >
+                     <Radio size={11} className={isSharing ? "text-white" : "text-white/30"} />
+                     <span>TRACKING_LIVE</span>
+                   </button>
+
+                   {/* MODO TÉRMICO / HEATMAP */}
+                   <button 
+                     onClick={() => setShowHeatmap(!showHeatmap)}
+                     className={cn(
+                       "h-8 px-3 border rounded-xs transition-all flex items-center gap-1.5 shrink-0 text-[8px] font-mono font-black uppercase tracking-widest",
+                       showHeatmap ? "bg-[#ff641d] border-[#ff641d] text-white shadow-[0_0_12px_rgba(255,100,29,0.4)]" : "bg-white/[0.02] border-white/5 text-white/40 hover:border-white/25"
+                     )}
+                   >
+                     <Activity size={10} className={showHeatmap ? "text-white" : "text-white/30"} />
+                     <span>MODO_TÉRMICO</span>
+                   </button>
+
+                   {/* CORES ZOOM IN */}
+                   <button 
+                     onClick={() => setMapZoom(z => Math.min(z + 1, 18))}
+                     className="h-8 w-8 bg-white/[0.02] border border-white/5 text-white/40 hover:text-white rounded-xs transition-all flex items-center justify-center shrink-0"
+                   >
+                     <Plus size={11} />
+                   </button>
+
+                   {/* CORES ZOOM OUT */}
+                   <button 
+                     onClick={() => setMapZoom(z => Math.max(z - 1, 3))}
+                     className="h-8 w-8 bg-white/[0.02] border border-white/5 text-white/40 hover:text-white rounded-xs transition-all flex items-center justify-center shrink-0"
+                   >
+                     <Minus size={11} />
+                   </button>
+                </div>
+             </div>
+          </div>
+
          {/* HUD SCAN EFFECT */}
          <div className="absolute inset-x-0 top-0 h-[300px] pointer-events-none z-[1500] bg-gradient-to-b from-[#ff641d]/10 to-transparent opacity-20"></div>
 
@@ -3166,7 +3296,7 @@ export default function AdventureMap() {
       {/* HUD OVERLAYS */}
 
       {/* Left Sidebar HUD (Categories - Universal) */}
-      <div className="absolute left-4 lg:left-6 top-[20%] lg:top-1/2 -translate-y-1/2 z-[2000] flex flex-col gap-1.5 pointer-events-auto">
+      <div className="hidden lg:flex absolute left-4 lg:left-6 top-[20%] lg:top-1/2 -translate-y-1/2 z-[2000] flex-col gap-1.5 pointer-events-auto">
          <div className="bg-black/60 backdrop-blur-xl border border-white/10 p-2 rounded-xs mb-2 shadow-2xl">
             <Filter size={14} className="text-[#ff641d] mx-auto animate-pulse" />
          </div>
@@ -3203,7 +3333,7 @@ export default function AdventureMap() {
         <div className="w-full max-w-7xl bg-[#0a0a0a]/45 backdrop-blur-md border border-[#ff7828]/18 rounded-sm p-1.5 flex flex-col lg:flex-row items-stretch lg:items-center gap-2 pointer-events-auto shadow-[0_20px_50px_rgba(0,0,0,0.4),0_0_20px_rgba(255,100,29,0.05)] transition-all ring-1 ring-white/5 ring-inset">
           
           {/* Section 1: Filters & Vehicles (Left on Desktop) */}
-          <div className="flex items-center gap-2 bg-white/[0.02] rounded-xs p-1 border border-[#ff7828]/10 order-2 lg:order-1 self-stretch lg:self-auto overflow-x-auto no-scrollbar">
+          <div className="hidden lg:flex items-center gap-2 bg-white/[0.02] rounded-xs p-1 border border-[#ff7828]/10 order-2 lg:order-1 self-stretch lg:self-auto overflow-x-auto no-scrollbar">
              <button 
                onClick={() => setShowFilters(!showFilters)}
                className={cn(
@@ -3404,6 +3534,18 @@ export default function AdventureMap() {
                 </AnimatePresence>
              </div>
 
+             {/* Mobile 3-Dots Sidebar Trigger */}
+             <button
+               onClick={() => setShowSidebarMobile(!showSidebarMobile)}
+               className={cn(
+                 "lg:hidden h-12 w-12 rounded-xs border flex items-center justify-center transition-all bg-[#0a0a0b]/80 border-[#ff7828]/15 text-[#ff641d] active:scale-95 shrink-0 shadow-lg",
+                 showSidebarMobile && "bg-[#ff641d]/10 border-[#ff641d] text-[#ff641d] animate-pulse"
+               )}
+               title="SISTEMA OPERACIONAL (TÁTICO)"
+             >
+               <MoreVertical size={16} />
+             </button>
+
              {/* Rotas Inteligentes / Saved Routes Button */}
              <div className="relative hidden sm:block shrink-0">
                 <button 
@@ -3488,21 +3630,21 @@ export default function AdventureMap() {
                                    <span className="text-[7px] font-mono text-white/40 uppercase">{route.country}</span>
                                 </div>
                                 <span className={cn(
-                                  "text-[6px] font-mono px-1.5 py-0.5 rounded-xs border uppercase",
-                                  route.difficulty === 'CRITICAL' ? "border-red-500/50 text-red-500" : "border-blue-500/50 text-blue-500"
-                                )}>{route.difficulty}</span>
-                             </div>
-                           </button>
-                         ))}
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-             </div>
-          </div>
+                                   "text-[6px] font-mono px-1.5 py-0.5 rounded-xs border uppercase",
+                                   route.difficulty === 'CRITICAL' ? "border-red-500/50 text-red-500" : "border-blue-500/50 text-blue-500"
+                                 )}>{route.difficulty}</span>
+                              </div>
+                            </button>
+                          ))}
+                       </div>
+                     </motion.div>
+                   )}
+                 </AnimatePresence>
+              </div>
+           </div>
 
           {/* Section 3: Status & Visual (Right on Desktop) */}
-          <div className="flex items-center gap-2 order-3 lg:order-3 self-stretch lg:self-auto ml-auto lg:ml-0">
+          <div className="hidden lg:flex items-center gap-2 order-3 lg:order-3 self-stretch lg:self-auto ml-auto lg:ml-0">
              {/* Integrated Heatmap Button */}
              <button 
                onClick={() => setShowHeatmap(!showHeatmap)}
@@ -3535,6 +3677,20 @@ export default function AdventureMap() {
                  isExpeditionMode ? "bg-green-500 animate-pulse shadow-[0_0_8px_#22c55e]" : "bg-white/10"
                )} />
                <span className="truncate">LIVE_NAV {isExpeditionMode ? 'ACTIVE' : 'OFF'}</span>
+             </button>
+
+             <div className="w-[1px] h-4 bg-white/10 mx-1" />
+
+             {/* 3-dots button to open GPS_TACTICAL_SYSTEM sidebar */}
+             <button
+               onClick={() => setShowSidebarMobile(!showSidebarMobile)}
+               className={cn(
+                 "h-10 w-10 rounded-xs border flex items-center justify-center transition-all bg-white/[0.03] border-[#ff7828]/10 text-white/40 hover:text-white hover:border-[#ff641d]/30 shrink-0",
+                 showSidebarMobile && "bg-[#ff641d]/10 border-[#ff641d] text-[#ff641d]"
+               )}
+               title="SISTEMA OPERACIONAL (TÁTICO)"
+             >
+               <MoreVertical size={16} />
              </button>
           </div>
         </div>
@@ -3701,8 +3857,8 @@ export default function AdventureMap() {
 
       {/* Responsive Categories Bar - REMOVED */}
 
-      {/* Right Action Stack (Vertical controls) - Repositioned for Mobile to bottom-right (within 55vh map constraints) */}
-      <div className="absolute right-4 top-[calc(55vh-160px)] lg:bottom-auto lg:top-1/2 lg:-translate-y-1/2 z-[4000] flex flex-col gap-2 pointer-events-auto">
+      {/* Right Action Stack (Vertical controls) - Positioned as floating OVERLAY over the map on both Mobile (top) and Desktop (centered) */}
+      <div className="flex absolute right-4 top-[110px] lg:top-1/2 lg:-translate-y-1/2 lg:bottom-auto z-[4000] flex-col gap-1.5 pointer-events-auto">
          {/* Tactical Mobile Menu Trigger */}
          <button 
            onClick={() => {
@@ -3711,10 +3867,10 @@ export default function AdventureMap() {
                sidebarRef.current?.scrollIntoView({ behavior: 'smooth' });
              }, 100);
            }}
-           className="lg:hidden w-10 h-10 bg-black/80 border border-[#ff641d]/50 text-[#ff641d] rounded-sm transition-all shadow-xl flex items-center justify-center animate-pulse"
+           className="lg:hidden w-9 h-9 bg-black/80 border border-[#ff641d]/50 text-[#ff641d] rounded-sm transition-all shadow-xl flex items-center justify-center animate-pulse"
            title="MENU TÁTICO"
          >
-            <Menu size={18} />
+            <Menu size={16} />
          </button>
 
 
@@ -3722,33 +3878,33 @@ export default function AdventureMap() {
          <button 
            onClick={handleLocateUser} 
            title="MINHA LOCALIZAÇÃO"
-           className="w-10 h-10 lg:w-12 lg:h-12 bg-black/80 border border-white/10 rounded-sm text-[#ff641d] hover:bg-[#ff641d] hover:text-white transition-all shadow-xl flex items-center justify-center group relative"
+           className="w-9 h-9 lg:w-12 lg:h-12 bg-black/80 border border-white/10 rounded-sm text-[#ff641d] hover:bg-[#ff641d] hover:text-white transition-all shadow-xl flex items-center justify-center group relative"
          >
-            <LocateFixed size={18} />
+            <LocateFixed size={16} />
             <div className="absolute right-full mr-3 px-2 py-1 bg-black text-[8px] font-mono whitespace-nowrap opacity-0 group-hover:opacity-100 border border-white/10 pointer-events-none uppercase">Minha_Posição</div>
          </button>
          
          <button 
            onClick={() => setIsTracing(!isTracing)}
            className={cn(
-             "w-10 h-10 lg:w-12 lg:h-12 rounded-sm border backdrop-blur-md transition-all flex items-center justify-center group relative",
+             "w-9 h-9 lg:w-12 lg:h-12 rounded-sm border backdrop-blur-md transition-all flex items-center justify-center group relative",
              isTracing ? "bg-[#ff641d] border-[#ff641d] text-white" : "bg-black/60 border-white/10 text-white/20 hover:border-[#ff641d]/40"
            )}
            title="TRAÇAR ROTA"
          >
-           <Ruler size={16} />
+           <Ruler size={14} />
            <div className="absolute right-full mr-3 px-2 py-1 bg-black text-[8px] font-mono whitespace-nowrap opacity-0 group-hover:opacity-100 border border-white/10 pointer-events-none uppercase">Traçar_Rota</div>
          </button>
 
          <button 
            onClick={() => setShowHeatmap(!showHeatmap)}
            className={cn(
-             "w-10 h-10 lg:w-12 lg:h-12 rounded-sm border backdrop-blur-md transition-all flex items-center justify-center group relative",
+             "w-9 h-9 lg:w-12 lg:h-12 rounded-sm border backdrop-blur-md transition-all flex items-center justify-center group relative",
              showHeatmap ? "bg-[#ff641d] border-[#ff641d] text-white" : "bg-black/60 border-white/10 text-white/20 hover:border-[#ff641d]/40"
            )}
            title="MODO TÉRMICO (CALOR)"
          >
-           <Activity size={16} />
+           <Activity size={14} />
            <div className="absolute right-full mr-3 px-2 py-1 bg-black text-[8px] font-mono whitespace-nowrap opacity-0 group-hover:opacity-100 border border-white/10 pointer-events-none uppercase">Modo_Térmico</div>
          </button>
 
@@ -3756,11 +3912,11 @@ export default function AdventureMap() {
             onClick={() => setIsSharing(!isSharing)} 
             title="TRACKING GPS LIVE"
             className={cn(
-              "w-10 h-10 lg:w-12 lg:h-12 border rounded-sm transition-all shadow-xl flex items-center justify-center group relative", 
+              "w-9 h-9 lg:w-12 lg:h-12 border rounded-sm transition-all shadow-xl flex items-center justify-center group relative", 
               isSharing ? "bg-blue-500 border-blue-500 animate-pulse text-white" : "bg-black/80 border-white/10 text-white/20 hover:border-blue-500/40"
             )}
           >
-             <Radio size={18} />
+             <Radio size={16} />
              <div className="absolute right-full mr-3 px-2 py-1 bg-black text-[8px] font-mono whitespace-nowrap opacity-0 group-hover:opacity-100 border border-white/10 pointer-events-none uppercase">Live_Tracking</div>
           </button>
 
@@ -3774,7 +3930,7 @@ export default function AdventureMap() {
               }} 
               title="COMPARTILHAR ROTA OU LOCAL"
               className={cn(
-                "w-10 h-10 lg:w-12 lg:h-12 border rounded-sm transition-all shadow-xl flex items-center justify-center relative", 
+                "w-9 h-9 lg:w-12 lg:h-12 border rounded-sm transition-all shadow-xl flex items-center justify-center relative", 
                 showShareMenu 
                   ? "bg-[#ff641d] border-[#ff641d] text-white" 
                   : (routePoints.length > 0 || !!selectedPreDefinedRoute)
@@ -3782,7 +3938,7 @@ export default function AdventureMap() {
                     : "bg-black/80 border-white/10 text-[#ff641d]/80 hover:text-white hover:border-white/30"
               )}
             >
-               <Share2 size={16} className={cn((routePoints.length > 0 || !!selectedPreDefinedRoute) && "animate-pulse")} />
+               <Share2 size={14} className={cn((routePoints.length > 0 || !!selectedPreDefinedRoute) && "animate-pulse")} />
                <div className="absolute right-full mr-3 px-2 py-1 bg-black text-[8px] font-mono whitespace-nowrap opacity-0 group-hover:opacity-100 border border-white/10 pointer-events-none uppercase">Compartilhar_Rota</div>
             </button>
 

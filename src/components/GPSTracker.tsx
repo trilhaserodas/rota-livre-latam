@@ -80,7 +80,7 @@ const GPSTracker: React.FC<GPSTrackerProps> = ({
       <motion.div 
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="bg-black/80 backdrop-blur-xl border border-white/10 rounded-sm p-3 min-w-[160px] shadow-2xl"
+        className="bg-[#0b0c0d]/65 backdrop-blur-md border border-[#ff641d]/30 rounded-xs p-3 min-w-[170px] shadow-[0_4px_30px_rgba(0,0,0,0.5),0_0_15px_rgba(255,100,29,0.15)]"
       >
         <div className="flex items-center justify-between mb-2 px-0.5">
            <div className="flex items-center gap-1.5">
