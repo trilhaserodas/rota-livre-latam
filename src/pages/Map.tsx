@@ -1454,7 +1454,11 @@ const initialPoints: LocationPoint[] = [
     lat: -28.481,
     lng: -48.779,
     category: 'water',
-    description: 'Histórica fonte de água pura construída no período imperial (1863). Ponto de reabastecimento fresquíssimo e gratuito no centro histórico de Laguna. 💬 Experiência Real: Água potável cristalina de excelente qualidade e frescor. Perfeito para encher as garrafas de hidratação do circuito.'
+    description: 'Histórica fonte de água pura construída no período imperial (1863). Ponto de reabastecimento fresquíssimo e gratuito no centro histórico de Laguna. 💬 Experiência Real: Água potável cristalina de excelente qualidade e frescor. Perfeito para encher as garrafas de hidratação do circuito.',
+    address: '🚩 R. José Tonai, 2 - Centro, Laguna - SC, 88790-000',
+    rating: '4.7 (2.717 Reviews)',
+    hours: 'Aberto 24h',
+    plusCode: 'G69C+F7 Centro, Laguna - SC'
   },
   {
     id: 'fl-danger-1',
@@ -1660,7 +1664,44 @@ export default function AdventureMap() {
   const [isExpeditionMode, setIsExpeditionMode] = useState(false);
   const [selectedPreDefinedRoute, setSelectedPreDefinedRoute] = useState<typeof preDefinedRoutes[0] | null>(null);
   const [showHeatmap, setShowHeatmap] = useState(false);
-  const [selectedPoint, setSelectedPoint] = useState<LocationPoint | null>(null);
+  const [selectedPointState, setSelectedPointState] = useState<LocationPoint | null>(null);
+
+  const enrichPoint = useCallback((p: LocationPoint | null): LocationPoint | null => {
+    if (!p) return null;
+    const cleanName = (name: string) => name.toLowerCase().replace(/[\u2700-\u27BF]|[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDD00-\uDFFF]/g, '').trim();
+    
+    const match = initialPoints.find(ip => {
+      if (ip.id === p.id) return true;
+      const latDiff = Math.abs(ip.lat - p.lat);
+      const lngDiff = Math.abs(ip.lng - p.lng);
+      if (latDiff < 0.005 && lngDiff < 0.005) {
+        const name1 = cleanName(ip.name);
+        const name2 = cleanName(p.name);
+        return name1.includes(name2) || name2.includes(name1);
+      }
+      return false;
+    });
+    
+    if (match) {
+      return {
+        ...p,
+        ...match
+      };
+    }
+    return p;
+  }, []);
+
+  const selectedPoint = useMemo(() => {
+    return enrichPoint(selectedPointState);
+  }, [selectedPointState, enrichPoint]);
+
+  const setSelectedPoint = useCallback((p: LocationPoint | null | ((prev: LocationPoint | null) => LocationPoint | null)) => {
+    if (typeof p === 'function') {
+      setSelectedPointState(prev => p(prev));
+    } else {
+      setSelectedPointState(p);
+    }
+  }, []);
   const [weatherData, setWeatherData] = useState<WeatherData | null>(null);
   const [isLoadingWeather, setIsLoadingWeather] = useState(false);
   const [aiIntelligence, setAiIntelligence] = useState<RouteAnalysisResult | null>(null);
@@ -2558,15 +2599,27 @@ export default function AdventureMap() {
 
     // 2. Check internal points (POIs) - use all available points
     const allPoints = [...initialPoints, ...autoDiscoveredPoints];
-    const internalMatch = allPoints.find(p => 
+    let internalMatch = allPoints.find(p => 
       p.name.toLowerCase().includes(query) ||
       p.category.toLowerCase() === query
     );
+
+    // Dynamic multi-word matching fallback for user-friendly POI search
+    if (!internalMatch) {
+      const queryTerms = query.split(/\s+/).filter(t => t.length > 0);
+      if (queryTerms.length > 0) {
+        internalMatch = allPoints.find(p => {
+          const pText = `${p.name} ${p.category} ${p.description || ''} ${p.address || ''}`.toLowerCase();
+          return queryTerms.every(term => pText.includes(term));
+        });
+      }
+    }
 
     if (internalMatch) {
       setMapCenter([internalMatch.lat, internalMatch.lng]);
       setMapZoom(18);
       setSelectedPoint(internalMatch);
+      setIsPointDetailsMinimized(false);
       setIsSearching(false);
       return;
     }
@@ -2588,8 +2641,15 @@ export default function AdventureMap() {
     const all = [...initialPoints, ...autoDiscoveredPoints];
     return all.filter(p => {
       const matchCat = selectedCategory === 'all' || p.category === selectedCategory;
-      const matchSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          p.description?.toLowerCase().includes(searchQuery.toLowerCase());
+      
+      let matchSearch = true;
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase().trim();
+        const queryTerms = q.split(/\s+/).filter(t => t.length > 0);
+        const pText = `${p.name} ${p.category} ${p.description || ''} ${p.address || ''}`.toLowerCase();
+        matchSearch = queryTerms.every(term => pText.includes(term));
+      }
+      
       return matchCat && matchSearch;
     });
   }, [selectedCategory, searchQuery, autoDiscoveredPoints]);
@@ -3528,6 +3588,7 @@ export default function AdventureMap() {
                     eventHandlers={{
                       click: () => {
                         setSelectedPoint(p);
+                        setIsPointDetailsMinimized(false);
                         setMapCenter([p.lat, p.lng]);
                       }
                     }}
@@ -3921,6 +3982,7 @@ export default function AdventureMap() {
                                   setMapCenter([poi.lat, poi.lng]);
                                   setMapZoom(17);
                                   setSelectedPoint(poi);
+                                  setIsPointDetailsMinimized(false);
                                   setShowSuggestions(false);
                                 }}
                                 className="w-full flex items-center gap-3 p-3 hover:bg-white/[0.05] transition-colors border-b border-white/5 last:border-0 group/poi"

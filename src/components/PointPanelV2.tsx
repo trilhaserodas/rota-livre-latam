@@ -302,10 +302,33 @@ const PointPanelV2: React.FC<PointPanelV2Props> = ({
                           <span className="text-[8px] font-mono text-white/30 uppercase tracking-widest mb-1">COORDENADAS_GPS</span>
                           <div className="flex justify-between items-center">
                             <span className="text-sm font-mono text-white/80">{point.lat.toFixed(6)}, {point.lng.toFixed(6)}</span>
-                            <button className="text-[9px] font-mono text-[#ff641d] hover:underline uppercase font-bold">COPIAR</button>
+                            <button 
+                              onClick={() => navigator.clipboard.writeText(`${point.lat.toFixed(6)}, ${point.lng.toFixed(6)}`)}
+                              className="text-[9px] font-mono text-[#ff641d] hover:underline uppercase font-bold"
+                            >
+                              COPIAR
+                            </button>
                           </div>
                         </div>
                       </div>
+
+                      {point.plusCode && (
+                        <div className="flex items-start gap-4 p-4 bg-white/[0.02] border border-white/5 rounded-sm hover:border-[#ff641d]/20 transition-all">
+                          <Zap size={18} className="text-[#ff641d] shrink-0 mt-0.5" />
+                          <div className="flex flex-col flex-1">
+                            <span className="text-[8px] font-mono text-white/30 uppercase tracking-widest mb-1">PLUS_CODE</span>
+                            <div className="flex justify-between items-center">
+                              <span className="text-sm font-mono text-white/80">{point.plusCode}</span>
+                              <button 
+                                onClick={() => navigator.clipboard.writeText(point.plusCode || '')}
+                                className="text-[9px] font-mono text-[#ff641d] hover:underline uppercase font-bold"
+                              >
+                                COPIAR
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
 

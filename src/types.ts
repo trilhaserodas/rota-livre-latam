@@ -33,6 +33,7 @@ export interface LocationPoint {
   isolationLevel?: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
   operationalStatus?: 'STABLE' | 'WARNING' | 'CRITICAL' | 'CLOSED';
   nextSupportDist?: string;
+  plusCode?: string;
 }
 
 export interface CommunityReport {
