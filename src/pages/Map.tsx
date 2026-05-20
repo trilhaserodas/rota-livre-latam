@@ -281,7 +281,8 @@ const preDefinedRoutes = [
     ] as [number, number][],
     difficulty: 'CRITICAL',
     vehicleTypes: ['bike', 'overland'],
-    status: 'ACTIVE_OPS'
+    status: 'ACTIVE_OPS',
+    description: 'Cicloturismo, mochilão e expedição internacional de Curitiba a Punta del Este passando por Joinville, Florianópolis, Laguna, Torres, Porto Alegre, Pelotas, Chuí, La Mano e Los Dedos.'
   }
 ];
 
@@ -2080,24 +2081,99 @@ export default function AdventureMap() {
     setWeatherData(null); // Clear previous data while fetching new one for a new location
 
     try {
-      const response = await fetch(`/api/weather?lat=${lat}&lon=${lng}`, { signal });
-      
-      if (!response.ok) {
-        const errText = await response.text();
-        let errorMessage = `Erro ${response.status}`;
-        try {
-          const errJson = JSON.parse(errText);
-          errorMessage = errJson.error || errorMessage;
-        } catch(e) {}
-        throw new Error(errorMessage);
+      let data;
+      try {
+        const response = await fetch(`/api/weather?lat=${lat}&lon=${lng}`, { signal });
+        
+        if (!response.ok) {
+          const errText = await response.text();
+          let errorMessage = `Erro ${response.status}`;
+          try {
+            const errJson = JSON.parse(errText);
+            errorMessage = errJson.error || errorMessage;
+          } catch(e) {}
+          throw new Error(errorMessage);
+        }
+
+        data = await response.json();
+        
+        if (!data || !data.main || !data.weather || !data.weather[0]) {
+          throw new Error('DADOS_CLIMA_ESTRUTURA_INVÁLIDA');
+        }
+      } catch (backendErr: any) {
+        console.warn("[Clima] Falha no backend proxy, tentando Open-Meteo client-side direto...", backendErr.message);
+        
+        // Fallback: Realiza requisição direta para a API Open-Meteo (CORS livre, sem necessidade de chave)
+        const openMeteoUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,weather_code,wind_speed_10m&timezone=auto`;
+        const omResponse = await fetch(openMeteoUrl, { signal });
+        
+        if (!omResponse.ok) {
+          throw new Error(`Ambos os provedores falharam. Open-Meteo status: ${omResponse.status}`);
+        }
+        
+        const omData = await omResponse.json();
+        if (!omData || !omData.current) {
+          throw new Error('Open-Meteo não retornou o objeto current');
+        }
+        
+        const current = omData.current;
+        
+        // Mapeador WMODescrição idêntico ao do backend server.ts para manter consistência total
+        const getWmoDesc = (code: number): string => {
+          const codes: Record<number, string> = {
+            0: 'Céu Limpo', 1: 'Predominantemente Limpo', 2: 'Parcialmente Nublado', 3: 'Nublado',
+            45: 'Nevoeiro', 48: 'Nevoeiro Escarchante', 51: 'Chuvisco Leve', 53: 'Chuvisco Moderado',
+            55: 'Chuvisco Denso', 61: 'Chuva Leve', 63: 'Chuva Moderada', 65: 'Chuva Forte',
+            71: 'Neve Leve', 73: 'Neve Moderada', 75: 'Neve Forte', 77: 'Grãos de Neve',
+            80: 'Pancadas de Chuva Leves', 81: 'Pancadas de Chuva Moderadas', 82: 'Pancadas de Chuva Fortes',
+            85: 'Pancadas de Neve Leves', 86: 'Pancadas de Neve Fortes', 95: 'Trovoada Leve ou Moderada',
+            96: 'Trovoada com Granizo Leve', 99: 'Trovoada com Granizo Forte'
+          };
+          return codes[code] || 'Condições Variáveis';
+        };
+
+        const getWmoIconStyle = (code: number, isDay: number): string => {
+          const day = isDay ? 'd' : 'n';
+          if (code === 0) return `01${day}`;
+          if (code === 1 || code === 2) return `02${day}`;
+          if (code === 3) return `03${day}`;
+          if (code === 45 || code === 48) return `50${day}`;
+          if (code >= 51 && code <= 55) return `09${day}`;
+          if (code >= 61 && code <= 65) return `10${day}`;
+          if (code >= 71 && code <= 77) return `13${day}`;
+          if (code >= 80 && code <= 82) return `09${day}`;
+          if (code >= 85 && code <= 86) return `13${day}`;
+          if (code >= 95 && code <= 99) return `11${day}`;
+          return `03${day}`;
+        };
+
+        // Adapta o formato para o esperado pelo React
+        data = {
+          main: {
+            temp: current.temperature_2m,
+            feels_like: current.apparent_temperature ?? current.temperature_2m,
+            humidity: current.relative_humidity_2m ?? 0
+          },
+          weather: [
+            {
+              description: getWmoDesc(current.weather_code),
+              icon: getWmoIconStyle(current.weather_code, current.is_day ?? 1)
+            }
+          ],
+          wind: {
+            speed: (current.wind_speed_10m || 0) / 3.6
+          },
+          debug: {
+            source: 'open-meteo-client',
+            hasKey: false,
+            latitude: lat,
+            longitude: lng,
+            env: 'production'
+          }
+        };
       }
 
-      const data = await response.json();
       console.log(`[Clima] RESPOSTA RECEBIDA - LAT: ${lat}, LON: ${lng}`);
-      
-      if (!data || !data.main || !data.weather || !data.weather[0]) {
-        throw new Error('DADOS_CLIMA_ESTRUTURA_INVÁLIDA');
-      }
       
       const mappedData: WeatherData = {
         temp: Math.round(data.main.temp ?? 0),
@@ -2435,7 +2511,8 @@ export default function AdventureMap() {
     return preDefinedRoutes.filter(r => {
       const matchSearch = !searchQuery || 
         r.name.toLowerCase().includes(q) || 
-        r.country.toLowerCase().includes(q);
+        r.country.toLowerCase().includes(q) ||
+        (r as any).description?.toLowerCase().includes(q);
         
       const matchDifficulty = difficultyFilter === 'all' || r.difficulty === difficultyFilter;
       const matchVehicle = vehicleFilter === 'all' || (r.vehicleTypes as string[]).includes(vehicleFilter);
@@ -2469,7 +2546,8 @@ export default function AdventureMap() {
     const routeMatch = preDefinedRoutes.find(r => 
       r.name.toLowerCase() === query || 
       r.name.toLowerCase().includes(query) ||
-      (r.country && r.country.toLowerCase().includes(query))
+      (r.country && r.country.toLowerCase().includes(query)) ||
+      ((r as any).description && (r as any).description.toLowerCase().includes(query))
     );
     
     if (routeMatch) {
