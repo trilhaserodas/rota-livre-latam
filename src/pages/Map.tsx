@@ -2476,6 +2476,77 @@ export default function AdventureMap() {
                              </div>
                           </div>
 
+                          {/* Real-time Weather Forecast Widget inside GPS_TACTICAL . SYSTEM */}
+                          <div className="space-y-2 mt-4">
+                            {userLocation === null ? (
+                              <div className="p-4 bg-yellow-500/5 border border-yellow-500/10 rounded-sm">
+                                <div className="flex items-center gap-2 mb-2">
+                                  <AlertTriangle size={12} className="text-yellow-500 animate-pulse" />
+                                  <span className="text-[8px] font-mono font-black text-yellow-500 tracking-[0.2em] uppercase">SISTEMA CLIMA: EM ESPERA</span>
+                                </div>
+                                <p className="text-[8.5px] font-mono text-white/40 uppercase tracking-wider leading-relaxed">
+                                  SINAL GPS REQUERIDO. INSTALE OU CLIQUE EM "MEU_VETOR" PARA CONFIGURAR A PREVISÃO DO TEMPO EM TEMPO REAL.
+                                </p>
+                              </div>
+                            ) : selectedPoint === null ? (
+                              <div className="p-4 bg-[#ff641d]/5 border border-[#ff641d]/10 rounded-sm">
+                                <div className="flex items-center gap-2 mb-2">
+                                  <CompassIcon size={12} className="text-[#ff641d] animate-pulse" />
+                                  <span className="text-[8px] font-mono font-black text-[#ff641d] tracking-[0.2em] uppercase">MONITOR_METEOROLÓGICO</span>
+                                </div>
+                                <p className="text-[8.5px] font-mono text-white/40 uppercase tracking-wider leading-relaxed">
+                                  NENHUM PONTO SELECIONADO. SELECIONE UM PONTO DE INTERESSE (POI) NO MAPA PARA OBTER CONDIÇÕES EM TEMPO REAL.
+                                </p>
+                              </div>
+                            ) : (
+                              <div className="p-4 bg-cyan-500/5 border border-cyan-500/20 rounded-sm">
+                                <div className="flex items-center justify-between mb-3 border-b border-cyan-500/15 pb-2">
+                                  <div className="flex items-center gap-2">
+                                    <Sun className="text-cyan-400 animate-spin" size={12} style={{ animationDuration: '8s' }} />
+                                    <span className="text-[8px] font-mono font-black text-cyan-400 tracking-[0.2em] uppercase">SINAL METEOROLÓGICO ATIVO</span>
+                                  </div>
+                                  <div className="text-[7px] font-mono text-cyan-400/50 uppercase">REALTIME_GPS_LINK</div>
+                                </div>
+                                
+                                <div className="space-y-3">
+                                  <div>
+                                    <span className="text-[7px] font-mono text-white/20 uppercase tracking-widest block">LOCALIZAÇÃO</span>
+                                    <span className="text-[10px] font-mono font-black text-white uppercase tracking-wider truncate block">{selectedPoint.name}</span>
+                                  </div>
+                                  
+                                  {isLoadingWeather ? (
+                                    <div className="flex items-center gap-2 py-2">
+                                      <Activity size={12} className="text-cyan-400 animate-pulse" />
+                                      <span className="text-[8px] font-mono text-white/40 uppercase tracking-widest">SINCRONIZANDO COM SATÉLITE...</span>
+                                    </div>
+                                  ) : weatherData ? (
+                                    <div className="grid grid-cols-3 gap-2 pt-1">
+                                      <div className="bg-black/40 border border-white/5 p-2 rounded-xs flex flex-col items-center justify-center text-center">
+                                        <Thermometer size={14} className="text-[#ff641d] mb-1" />
+                                        <span className="text-[6.5px] font-mono text-white/30 uppercase tracking-tighter">TEMP</span>
+                                        <span className="text-sm font-mono font-black text-white">{weatherData.temp}°C</span>
+                                      </div>
+                                      
+                                      <div className="bg-black/40 border border-white/5 p-2 rounded-xs flex flex-col items-center justify-center text-center col-span-1">
+                                        <Wind size={14} className="text-cyan-400 mb-1" />
+                                        <span className="text-[6.5px] font-mono text-white/30 uppercase tracking-tighter">VENTO</span>
+                                        <span className="text-sm font-mono font-black text-white truncate w-full">{weatherData.windSpeed} M/S</span>
+                                      </div>
+
+                                      <div className="bg-black/40 border border-white/5 p-2 rounded-xs flex flex-col items-center justify-center text-center col-span-1">
+                                        <Cloud size={14} className="text-blue-400 mb-1" />
+                                        <span className="text-[6.5px] font-mono text-white/30 uppercase tracking-tighter">CONDIÇÃO</span>
+                                        <span className="text-[8.5px] font-mono font-black text-white/90 uppercase leading-none mt-1 break-words line-clamp-2 w-full text-center">{weatherData.description}</span>
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <span className="text-[8px] font-mono text-white/20 uppercase">ERRO_SINAL_METEOROLOGICO</span>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+
                           {/* Active Route Metrics in Sidebar */}
                           {routePoints.length > 0 && (
                             <div className="mt-4 p-4 bg-[#ff641d]/10 border border-[#ff641d]/20 rounded-sm space-y-4">
