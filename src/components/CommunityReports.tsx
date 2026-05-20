@@ -47,6 +47,7 @@ interface Report {
   location?: string;
   createdAt: any;
   status: 'PENDING' | 'APPROVED';
+  operationalStatus?: 'STABLE' | 'WARNING' | 'CRITICAL' | 'CLOSED';
 }
 
 export default function CommunityReports() {
@@ -119,7 +120,18 @@ export default function CommunityReports() {
                 <User size={16} />
               </div>
               <div>
-                <div className="text-[11px] font-mono font-black text-white uppercase tracking-widest">{report.userName}</div>
+                <div className="text-[11px] font-mono font-black text-white uppercase tracking-widest flex items-center gap-2 flex-wrap">
+                  {report.userName}
+                  {report.operationalStatus && (
+                    <span className="text-[6.5px] font-mono px-1.5 py-0.5 rounded-sm border uppercase font-bold" style={{
+                      borderColor: report.operationalStatus === 'STABLE' ? '#22c55e30' : report.operationalStatus === 'WARNING' ? '#eab30830' : report.operationalStatus === 'CRITICAL' ? '#ff641d30' : '#ef444430',
+                      color: report.operationalStatus === 'STABLE' ? '#22c55e' : report.operationalStatus === 'WARNING' ? '#eab308' : report.operationalStatus === 'CRITICAL' ? '#ff641d' : '#ef4444',
+                      backgroundColor: report.operationalStatus === 'STABLE' ? '#22c55e05' : report.operationalStatus === 'WARNING' ? '#eab30805' : report.operationalStatus === 'CRITICAL' ? '#ff641d05' : '#ef444405',
+                    }}>
+                      {report.operationalStatus === 'STABLE' ? '🟢 OPERACIONAL' : report.operationalStatus === 'WARNING' ? '🟡 ATENÇÃO' : report.operationalStatus === 'CRITICAL' ? '🟠 INSTÁVEL' : '🔴 CRÍTICO'}
+                    </span>
+                  )}
+                </div>
                 <div className="text-[9px] font-mono text-white/30 uppercase tracking-widest flex items-center gap-1.5 mt-0.5">
                   <Clock size={10} className="text-[#ff641d]" /> 
                   {report.createdAt?.toDate ? new Date(report.createdAt.toDate()).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : 'SINAL_RECENTE'}

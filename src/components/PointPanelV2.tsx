@@ -52,12 +52,14 @@ const PointPanelV2: React.FC<PointPanelV2Props> = ({
 }) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [reports, setReports] = useState<CommunityReport[]>([]);
+  const [locallySubmittedReports, setLocallySubmittedReports] = useState<CommunityReport[]>([]);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [newReport, setNewReport] = useState({
     name: '',
     text: '',
     category: 'estrada' as CommunityReport['category'],
-    type: 'danger' as CommunityReport['type']
+    type: 'danger' as CommunityReport['type'],
+    operationalStatus: 'STABLE' as 'STABLE' | 'WARNING' | 'CRITICAL' | 'CLOSED'
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -76,35 +78,132 @@ const PointPanelV2: React.FC<PointPanelV2Props> = ({
     );
 
     const unsubscribe = onSnapshot(reportsQuery, (snapshot) => {
-      const reportsData = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as CommunityReport[];
+      const reportsData = snapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          pointId: data.pointId,
+          authorName: data.userName || data.authorName || 'Explorador',
+          text: data.content || data.text || '',
+          category: data.category || 'estrada',
+          type: data.reportType || data.type || 'danger',
+          timestamp: data.createdAt || data.timestamp || null,
+          operationalStatus: data.operationalStatus || null,
+          status: data.status
+        };
+      }) as any;
       setReports(reportsData);
     });
 
     return () => unsubscribe();
   }, [point?.id]);
 
+  const allReports = React.useMemo(() => {
+    if (!point?.id) return [];
+    const matchedLocals = locallySubmittedReports.filter(r => r.pointId === point.id);
+    return [...matchedLocals, ...reports];
+  }, [reports, locallySubmittedReports, point?.id]);
+
+  const calculateCommunityStatus = React.useCallback(() => {
+    const statusReports = allReports.filter(r => r.operationalStatus);
+    
+    let score = 0.95; // default to STABLE / 95% if not defined
+    let text = 'OPERACIONAL';
+    let color = '#22c55e'; // green
+    let icon = '🟢';
+    
+    // Map point's own default status if no reports exist yet
+    if (point?.operationalStatus) {
+      if (point.operationalStatus === 'STABLE') {
+        score = 0.95;
+      } else if (point.operationalStatus === 'WARNING') {
+        score = 0.70;
+      } else if (point.operationalStatus === 'CRITICAL') {
+        score = 0.40;
+      } else if (point.operationalStatus === 'CLOSED') {
+        score = 0.05;
+      }
+    }
+    
+    if (statusReports.length > 0) {
+      const sum = statusReports.reduce((acc, r) => {
+        if (r.operationalStatus === 'STABLE') return acc + 1.0;
+        if (r.operationalStatus === 'WARNING') return acc + 0.70;
+        if (r.operationalStatus === 'CRITICAL') return acc + 0.40;
+        if (r.operationalStatus === 'CLOSED') return acc + 0.05;
+        return acc + 1.0;
+      }, 0);
+      score = sum / statusReports.length;
+    }
+    
+    const percentage = Math.round(score * 100);
+    
+    if (percentage >= 80) {
+      text = 'OPERACIONAL';
+      color = '#22c55e';
+      icon = '🟢';
+    } else if (percentage >= 50) {
+      text = 'ATENÇÃO';
+      color = '#eab308';
+      icon = '🟡';
+    } else if (percentage >= 25) {
+      text = 'INSTÁVEL';
+      color = '#ff641d';
+      icon = '🟠';
+    } else {
+      text = 'CRÍTICO';
+      color = '#ef4444';
+      icon = '🔴';
+    }
+    
+    return { text, percentage, color, icon };
+  }, [allReports, point?.operationalStatus]);
+
   const handleSubmitReport = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!point?.id || !newReport.text || !newReport.name) return;
+    if (!point?.id || !newReport.name) return;
 
     setIsSubmitting(true);
     try {
-      await addDoc(collection(db, 'reports'), {
+      const defaultTextMap = {
+        STABLE: 'Local seguro e recomendado - 🟢 OPERACIONAL',
+        WARNING: 'Local utilizável com observações - 🟡 ATENÇÃO',
+        CRITICAL: 'Problemas relatados ou estrutura instável - 🟠 INSTÁVEL',
+        CLOSED: 'Inacessível ou perigoso - 🔴 CRÍTICO'
+      };
+      
+      const finalContent = newReport.text.trim() || defaultTextMap[newReport.operationalStatus];
+
+      const reportPayload = {
         pointId: point.id,
         userName: newReport.name,
-        content: newReport.text,
+        content: finalContent,
         category: newReport.category,
         reportType: newReport.type,
+        operationalStatus: newReport.operationalStatus,
         status: 'PENDING',
         createdAt: serverTimestamp(),
         userId: auth.currentUser?.uid || 'anonymous'
-      });
+      };
+
+      // Add to Firestore database
+      await addDoc(collection(db, 'reports'), reportPayload);
+
+      // Save locally to display immediately with pending flag
+      const localReport: CommunityReport = {
+        id: `local-${Date.now()}`,
+        pointId: point.id,
+        authorName: newReport.name,
+        text: finalContent,
+        category: newReport.category,
+        type: newReport.type,
+        operationalStatus: newReport.operationalStatus,
+        timestamp: { toDate: () => new Date() }
+      };
+      setLocallySubmittedReports(prev => [localReport, ...prev]);
+
       setIsReportModalOpen(false);
-      setNewReport({ name: '', text: '', category: 'estrada', type: 'danger' });
-      // Suggestion: could add a toast here
+      setNewReport({ name: '', text: '', category: 'estrada', type: 'danger', operationalStatus: 'STABLE' });
     } catch (error) {
       console.error("Error submitting report:", error);
     } finally {
@@ -285,6 +384,36 @@ const PointPanelV2: React.FC<PointPanelV2Props> = ({
                       {point.name}
                     </h2>
 
+                    {/* Operational Community Status Thermometer */}
+                    {(() => {
+                      const { text, percentage, color } = calculateCommunityStatus();
+                      return (
+                        <div 
+                          className="mb-6 p-4 rounded-sm border flex items-center justify-between relative overflow-hidden"
+                          style={{
+                            backgroundColor: `${color}05`,
+                            borderColor: `${color}20`,
+                            boxShadow: `inset 0 0 15px ${color}05`
+                          }}
+                        >
+                          <div className="absolute left-0 top-0 bottom-0 w-[4px]" style={{ backgroundColor: color }} />
+                          <div className="flex flex-col gap-1.5 pl-2">
+                            <span className="text-[8px] font-mono text-white/30 uppercase tracking-[0.3em] font-black">STATUS DA COMUNIDADE</span>
+                            <div className="flex items-center gap-2">
+                              <span className="w-2.5 h-2.5 rounded-full animate-pulse" style={{ backgroundColor: color, boxShadow: `0 0 10px ${color}` }} />
+                              <span className="text-lg font-mono font-black uppercase tracking-tight" style={{ color: color }}>
+                                {text}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="flex flex-col items-end">
+                            <span className="text-2xl font-mono font-black tracking-tighter" style={{ color: color }}>{percentage}%</span>
+                            <span className="text-[7px] font-mono text-white/30 uppercase tracking-widest font-bold">APROVAÇÃO COMUNITÁRIA</span>
+                          </div>
+                        </div>
+                      );
+                    })()}
+
                     <div className="grid grid-cols-1 gap-4">
                       {point.address && (
                         <div className="flex items-start gap-4 p-4 bg-white/[0.02] border border-white/5 rounded-sm group hover:border-[#ff641d]/20 transition-all">
@@ -417,7 +546,7 @@ const PointPanelV2: React.FC<PointPanelV2Props> = ({
                         </div>
 
                         <div className="space-y-3">
-                           {reports.length > 0 ? reports.map((report) => (
+                           {allReports.length > 0 ? allReports.map((report) => (
                              <motion.div 
                                initial={{ opacity: 0, y: 10 }}
                                animate={{ opacity: 1, y: 0 }}
@@ -426,9 +555,20 @@ const PointPanelV2: React.FC<PointPanelV2Props> = ({
                              >
                                 <div className="absolute left-0 top-0 bottom-0 w-[2px] bg-[#ff641d] opacity-40 group-hover/report:opacity-100 transition-opacity" />
                                 <div className="flex justify-between items-start mb-2">
-                                   <div className="flex flex-col">
+                                   <div className="flex flex-col gap-1">
                                       <span className="text-[10px] font-mono font-black text-white uppercase">{report.authorName}</span>
-                                      <span className="text-[7px] font-mono text-[#ff641d] uppercase tracking-widest">CATEGORIA_{report.category}</span>
+                                      <div className="flex flex-wrap items-center gap-1.5">
+                                         <span className="text-[7px] font-mono text-[#ff641d] uppercase tracking-widest">CATEGORIA_{report.category}</span>
+                                         {report.operationalStatus && (
+                                            <span className="text-[6.5px] font-mono px-1.5 py-0.5 rounded-sm border uppercase font-bold" style={{
+                                               borderColor: report.operationalStatus === 'STABLE' ? '#22c55e30' : report.operationalStatus === 'WARNING' ? '#eab30830' : report.operationalStatus === 'CRITICAL' ? '#ff641d30' : '#ef444430',
+                                               color: report.operationalStatus === 'STABLE' ? '#22c55e' : report.operationalStatus === 'WARNING' ? '#eab308' : report.operationalStatus === 'CRITICAL' ? '#ff641d' : '#ef4444',
+                                               backgroundColor: report.operationalStatus === 'STABLE' ? '#22c55e05' : report.operationalStatus === 'WARNING' ? '#eab30805' : report.operationalStatus === 'CRITICAL' ? '#ff641d05' : '#ef444405',
+                                            }}>
+                                               {report.operationalStatus === 'STABLE' ? '🟢 OPERACIONAL' : report.operationalStatus === 'WARNING' ? '🟡 ATENÇÃO' : report.operationalStatus === 'CRITICAL' ? '🟠 INSTÁVEL' : '🔴 CRÍTICO'}
+                                            </span>
+                                         )}
+                                      </div>
                                    </div>
                                    <span className="text-[7px] font-mono text-white/20">
                                       {report.timestamp?.toDate ? report.timestamp.toDate().toLocaleDateString() : 'REAL_TIME'}
@@ -691,13 +831,44 @@ const PointPanelV2: React.FC<PointPanelV2Props> = ({
                     </div>
                   </div>
 
+                  {/* STATUS OPERACIONAL DO LOCAL Selection Grid */}
+                  <div className="space-y-3">
+                    <label className="text-[10px] font-mono text-[#ff641d] uppercase tracking-[0.2em] block">Status Operacional do Local</label>
+                    <div className="grid grid-cols-2 gap-3">
+                      {[
+                        { id: 'STABLE', label: '🟢 OPERACIONAL', color: '#22c55e', text: 'Seguro e recomendado' },
+                        { id: 'WARNING', label: '🟡 ATENÇÃO', color: '#eab308', text: 'Utilizável com observações' },
+                        { id: 'CRITICAL', label: '🟠 INSTÁVEL', color: '#ff641d', text: 'Problemas / estrutura ruim' },
+                        { id: 'CLOSED', label: '🔴 CRÍTICO', color: '#ef4444', text: 'Perigoso ou inacessível' }
+                      ].map(item => (
+                        <button
+                          key={item.id}
+                          type="button"
+                          onClick={() => setNewReport({...newReport, operationalStatus: item.id as any})}
+                          className={cn(
+                            "p-3 rounded-sm border text-left flex flex-col gap-1 transition-all relative overflow-hidden",
+                            newReport.operationalStatus === item.id 
+                              ? "bg-white/[0.03]" 
+                              : "bg-transparent border-white/5 opacity-40 hover:opacity-75"
+                          )}
+                          style={{
+                            borderColor: newReport.operationalStatus === item.id ? item.color : 'rgba(255,255,255,0.05)',
+                            boxShadow: newReport.operationalStatus === item.id ? `inset 0 0 10px ${item.color}15, 0 0 10px ${item.color}10` : 'none'
+                          }}
+                        >
+                          <span className="text-[10px] font-mono font-black uppercase" style={{ color: item.color }}>{item.label}</span>
+                          <span className="text-[8px] font-mono text-white/50 leading-tight">{item.text}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
                   <div className="space-y-4">
-                    <label className="text-[10px] font-mono text-[#ff641d] uppercase tracking-[0.2em]">DATA_REPORT (TEXTO_CURTO)</label>
+                    <label className="text-[10px] font-mono text-[#ff641d] uppercase tracking-[0.2em]">Ocorrência / Comentário (Opcional)</label>
                     <textarea 
-                      required
                       value={newReport.text}
                       onChange={e => setNewReport({...newReport, text: e.target.value})}
-                      placeholder="DESCREVA A SITUAÇÃO TÁTICA ATUAL COM PRECISÃO..."
+                      placeholder="Exemplo: 'água disponível', 'banheiro fechado', 'camping abandonado', 'estrada parcialmente interditada'..."
                       rows={4}
                       className="w-full bg-white/5 border border-white/10 rounded-sm p-4 font-mono text-xs text-white placeholder:text-white/20 focus:border-[#ff641d]/50 focus:outline-none transition-all resize-none"
                     />

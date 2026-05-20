@@ -1458,7 +1458,8 @@ const initialPoints: LocationPoint[] = [
     address: '🚩 R. José Tonai, 2 - Centro, Laguna - SC, 88790-000',
     rating: '4.7 (2.717 Reviews)',
     hours: 'Aberto 24h',
-    plusCode: 'G69C+F7 Centro, Laguna - SC'
+    plusCode: 'G69C+F7 Centro, Laguna - SC',
+    operationalStatus: 'STABLE'
   },
   {
     id: 'fl-danger-1',
@@ -3578,13 +3579,21 @@ export default function AdventureMap() {
                 const cat = categories.find(c => c.id === p.category) || categories[0];
                 const isSelected = selectedPoint?.id === p.id;
                 
+                let pinColor = cat.color;
+                if (p.operationalStatus) {
+                  if (p.operationalStatus === 'STABLE') pinColor = '#22c55e';
+                  else if (p.operationalStatus === 'WARNING') pinColor = '#eab308';
+                  else if (p.operationalStatus === 'CRITICAL') pinColor = '#ff641d';
+                  else if (p.operationalStatus === 'CLOSED') pinColor = '#ef4444';
+                }
+                
                 return (
                   <Marker 
                     key={p.id} 
                     position={[p.lat, p.lng]} 
                     icon={p.id === 'la-mano-punta-del-este' 
                       ? createSpecialDestinationIcon(isSelected) 
-                      : (isSelected ? createCustomIcon(cat.color, true) : createCustomIcon(cat.color))}
+                      : (isSelected ? createCustomIcon(pinColor, true) : createCustomIcon(pinColor))}
                     eventHandlers={{
                       click: () => {
                         setSelectedPoint(p);

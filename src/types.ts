@@ -44,4 +44,5 @@ export interface CommunityReport {
   text: string;
   type: 'flood' | 'road_blocked' | 'danger' | 'abandoned_gas' | 'water' | 'wifi' | 'safe_camping' | 'storm' | 'strong_wind' | 'animal';
   timestamp: any;
+  operationalStatus?: 'STABLE' | 'WARNING' | 'CRITICAL' | 'CLOSED';
 }
