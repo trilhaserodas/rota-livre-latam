@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Layout from '../components/Layout';
+import SerraDoRioDoRastroWidget from '../components/SerraDoRioDoRastroWidget';
 
 const REGIONS = [
   { id: 'curitiba', name: 'Curitiba', country: 'Brasil', lat: -25.43, lng: -49.27, sub: 'Capital_Paranaense' },
@@ -533,6 +534,11 @@ export default function WeatherHub() {
               </motion.div>
             )}
           </AnimatePresence>
+
+          {/* Termômetro de Status Operacional Inteligente - Serra do Rio do Rastro */}
+          <div className="mb-12">
+            <SerraDoRioDoRastroWidget />
+          </div>
 
           <div className="mb-6 flex items-center justify-between">
             <h2 className="text-xl font-display font-black text-white/40 uppercase tracking-widest flex items-center gap-3">
