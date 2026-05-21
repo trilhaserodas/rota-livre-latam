@@ -86,13 +86,138 @@ export default function SerraDoRioDoRastroWidget() {
     else setIsRefreshing(true);
 
     try {
-      const res = await fetch('/api/weather/serra-rio-do-rastro');
-      if (!res.ok) throw new Error('Falha ao obter análise meteorológica');
-      const json = await res.json();
-      setData(json);
+      let fetchedData: SerraData;
+      
+      try {
+        const res = await fetch('/api/weather/serra-rio-do-rastro');
+        if (!res.ok) throw new Error('Status de resposta de rede inválido de API backend');
+        
+        const text = await res.text();
+        const trimmed = text.trim();
+        
+        // Se retornar HTML de uma hospedagem estática que faz fallback para index.html
+        if (trimmed.startsWith('<!doctype') || trimmed.startsWith('<!DOCTYPE') || trimmed.startsWith('<html')) {
+          throw new Error('Retornou HTML ao invés de JSON (Provável ambiente estático como Vercel)');
+        }
+        
+        fetchedData = JSON.parse(trimmed);
+      } catch (backendError) {
+        console.warn("API de backend indisponível ou em host estático (como Vercel). Iniciando recuperação local direta via Open-Meteo:", backendError);
+        
+        // Recuperação direta e cálculo equivalente em tempo real no Client-side
+        const lat = -28.39;
+        const lon = -49.55;
+        const openMeteoUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m,wind_gusts_10m,visibility&timezone=auto`;
+        
+        const omResponse = await fetch(openMeteoUrl);
+        if (!omResponse.ok) {
+          throw new Error(`Open-Meteo API falhou com status ${omResponse.status}`);
+        }
+        
+        const omData = await omResponse.json();
+        if (!omData.current) {
+          throw new Error("Dados da Open-Meteo inválidos retornados direto na Serra");
+        }
+        
+        const current = omData.current;
+        const wind = current.wind_speed_10m || 0;
+        const windGusts = current.wind_gusts_10m || 0;
+        const temp = current.temperature_2m || 0;
+        const apparentTemp = current.apparent_temperature || temp;
+        
+        // Determinar precisão de visibilidade em km
+        let visibilityRaw = current.visibility;
+        let visibility_km = 10;
+        if (typeof visibilityRaw === 'number') {
+          visibility_km = visibilityRaw / 1000;
+        } else {
+          const code = current.weather_code || 0;
+          if (code === 45 || code === 48) {
+            visibility_km = 0.3;
+          } else if (code >= 95) {
+            visibility_km = 1.2;
+          } else if (code >= 61 && code <= 65) {
+            visibility_km = 2.5;
+          } else if (code <= 3) {
+            visibility_km = 10.0;
+          } else {
+            visibility_km = 6.0;
+          }
+        }
+        
+        // Classificar status operacional de segurança baseado estritamente nos limites do projeto
+        let statusColor: 'SAFE' | 'ATTENTION' | 'DANGER' = 'SAFE';
+        if (visibility_km < 1 || wind > 50) {
+          statusColor = 'DANGER';
+        } else if ((visibility_km >= 1 && visibility_km <= 5) || (wind >= 30 && wind <= 50)) {
+          statusColor = 'ATTENTION';
+        } else {
+          statusColor = 'SAFE';
+        }
+        
+        const localWmoDesc = (code: number): string => {
+          const codes: Record<number, string> = {
+            0: 'Céu Limpo', 
+            1: 'Predominantemente Limpo', 
+            2: 'Parcialmente Nublado', 
+            3: 'Nublado',
+            45: 'Nevoeiro', 
+            48: 'Nevoeiro Escarchante', 
+            51: 'Chuvisco Leve',
+            53: 'Chuvisco Moderado',
+            55: 'Chuvisco Denso',
+            61: 'Chuva Leve', 
+            63: 'Chuva Moderada', 
+            65: 'Chuva Forte',
+            71: 'Neve Leve', 
+            73: 'Neve Moderada',
+            75: 'Neve Forte',
+            80: 'Pancadas de Chuva Leves',
+            81: 'Pancadas de Chuva Moderadas',
+            82: 'Pancadas de Chuva Violentas',
+            95: 'Trovoada Leve/Moderada',
+            96: 'Trovoada com Granizo Leve',
+            99: 'Trovoada com Granizo Forte'
+          };
+          return codes[code] || 'Condições Variáveis';
+        };
+        
+        const metrics = {
+          temp,
+          apparentTemp,
+          wind,
+          windGusts,
+          visibility_km,
+          weatherCode: current.weather_code || 0,
+          weatherDesc: localWmoDesc(current.weather_code || 0),
+          precipitation: current.precipitation || 0
+        };
+        
+        const alertTitle = statusColor === 'SAFE' 
+          ? "PISTA LIMPA: VALORES DENTRO DO PROGRAMADO" 
+          : statusColor === 'ATTENTION' 
+            ? "ATENÇÃO: NEBLINA OU VENTOS MODERADOS/LATERAIS" 
+            : "ALERTA CRÍTICO: CONDIÇÕES IMPRÓPRIAS";
+            
+        const alertMessage = statusColor === 'SAFE'
+          ? "Visibilidade favorável e ventos sob controle. Subida segura para praticantes de cicloturismo de aventura."
+          : statusColor === 'ATTENTION'
+            ? "Trechos com neblina na altitude ou rajadas de vento lateral. Mantenha os faróis ativos e velocidade reduzida."
+            : "Condições de alto risco com ventos severos ou névoa densa. Rota instável e extremamente desaconselhada.";
+            
+        fetchedData = {
+          statusColor,
+          visibility_km: visibility_km.toFixed(1),
+          alertTitle,
+          alertMessage,
+          metrics
+        };
+      }
+      
+      setData(fetchedData);
       setError(false);
     } catch (err) {
-      console.error("Failed to load Serra do Rio do Rastro operational weather:", err);
+      console.error("Erro crítico ao carregar dados meteorológicos da Serra do Rio do Rastro:", err);
       setError(true);
     } finally {
       setLoading(false);
