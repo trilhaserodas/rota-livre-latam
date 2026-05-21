@@ -81,7 +81,29 @@ export default function SerraDoRioDoRastroWidget() {
     }
   };
 
-  const loadData = async (silent = false) => {
+  const loadData = async (silent = false, force = false) => {
+    const CACHE_KEY = 'rotalivre_serra_weather';
+    const CACHE_TTL_MS = 15 * 60 * 1000; // 15 minutos
+
+    // Tentar ler cache local se não for um recarregamento forçado
+    if (!force) {
+      try {
+        const cachedStr = localStorage.getItem(CACHE_KEY);
+        if (cachedStr) {
+          const cached = JSON.parse(cachedStr);
+          const now = Date.now();
+          if (cached && cached.timestamp && (now - cached.timestamp < CACHE_TTL_MS) && cached.data) {
+            console.log("[WeatherClient] Cache local ativado para Serra do Rio do Rastro (Restando " + Math.round((CACHE_TTL_MS - (now - cached.timestamp)) / 1000) + "s)");
+            setData(cached.data);
+            setLoading(false);
+            return;
+          }
+        }
+      } catch (cacheErr) {
+        console.warn("[WeatherClient] Erro ao descriptografar cache local:", cacheErr);
+      }
+    }
+
     if (!silent) setLoading(true);
     else setIsRefreshing(true);
 
@@ -214,6 +236,16 @@ export default function SerraDoRioDoRastroWidget() {
         };
       }
       
+      // Salvar resultado bem-sucedido no localStorage
+      try {
+        localStorage.setItem(CACHE_KEY, JSON.stringify({
+          data: fetchedData,
+          timestamp: Date.now()
+        }));
+      } catch (saveErr) {
+        console.warn("[WeatherClient] Falha ao persistir no cache local:", saveErr);
+      }
+
       setData(fetchedData);
       setError(false);
     } catch (err) {
@@ -226,8 +258,8 @@ export default function SerraDoRioDoRastroWidget() {
   };
 
   useEffect(() => {
-    loadData();
-    const interval = setInterval(() => loadData(true), 1000 * 60 * 15); // refresh every 15 minutes
+    loadData(false, false);
+    const interval = setInterval(() => loadData(true, true), 1000 * 60 * 15); // refresh every 15 minutes (forces live fetch)
     return () => clearInterval(interval);
   }, []);
 
@@ -293,7 +325,7 @@ export default function SerraDoRioDoRastroWidget() {
             </div>
           </div>
           <button
-            onClick={() => loadData(true)}
+            onClick={() => loadData(true, true)}
             disabled={isRefreshing}
             className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-[9px] font-mono font-bold text-white/60 hover:text-white uppercase tracking-widest transition-all disabled:opacity-50`}
           >

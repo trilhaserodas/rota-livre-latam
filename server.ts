@@ -12,6 +12,14 @@ async function startServer() {
 
   app.use(express.json());
 
+  // Cache para a previsão do tempo de Serra do Rio do Rastro (Tempo de vida: 15 minutos)
+  interface SerraWeatherCache {
+    data: any;
+    timestamp: number;
+  }
+  let serraWeatherCache: SerraWeatherCache | null = null;
+  const CACHE_TTL_MS = 15 * 60 * 1000; // 15 minutos
+
   // API Routes
   app.post("/api/chat", async (req, res) => {
     const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
@@ -131,6 +139,13 @@ Responda sempre em Português do Brasil.`,
     const lon = -49.55;
 
     console.log(`[WeatherAPI] Serra do Rio do Rastro custom analysis requested.`);
+
+    const now = Date.now();
+    if (serraWeatherCache && (now - serraWeatherCache.timestamp < CACHE_TTL_MS)) {
+      console.log(`[WeatherAPI] Serra do Rio do Rastro cache HIT. Restando ${Math.round((CACHE_TTL_MS - (now - serraWeatherCache.timestamp)) / 1000)}s.`);
+      return res.json(serraWeatherCache.data);
+    }
+    console.log(`[WeatherAPI] Serra do Rio do Rastro cache MISS. Buscando dados novos.`);
 
     try {
       // 1. Fetch live coordinates from Open-Meteo
@@ -275,10 +290,16 @@ Responda ÚNICA E EXCLUSIVAMENTE com um objeto JSON válido, sem bloco markdown 
              const cleanJsonText = responseText.replace(/```json|```/gi, "").trim();
              const aiJson = JSON.parse(cleanJsonText);
              console.log(`[WeatherAPI] Gemini Analysis succeeded:`, aiJson);
-             return res.json({
+             const finalResponse = {
                 ...aiJson,
                 metrics
-             });
+             };
+             // Salvar no cache do servidor
+             serraWeatherCache = {
+                data: finalResponse,
+                timestamp: Date.now()
+             };
+             return res.json(finalResponse);
           }
         } catch (aiErr: any) {
           console.error(`[WeatherAPI] Gemini AI call failed or JSON parse error. Using tactical fallback.`, aiErr.message);
@@ -287,10 +308,16 @@ Responda ÚNICA E EXCLUSIVAMENTE com um objeto JSON válido, sem bloco markdown 
 
       // If no API key or AI failed, return the high-quality fallback aligning precisely with status metrics
       console.log(`[WeatherAPI] Returning calculated fallback weather object`);
-      return res.json({
+      const fallbackResult = {
         ...fallbackResponse,
         metrics
-      });
+      };
+      // Salvar no cache do servidor
+      serraWeatherCache = {
+         data: fallbackResult,
+         timestamp: Date.now()
+      };
+      return res.json(fallbackResult);
 
     } catch (err: any) {
       console.error("[WeatherAPI] Serra analysis ultimate exception:", err.message);
