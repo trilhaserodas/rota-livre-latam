@@ -1713,6 +1713,17 @@ export default function AdventureMap() {
   const [isLoadingElevation, setIsLoadingElevation] = useState(false);
   const [isPointDetailsMinimized, setIsPointDetailsMinimized] = useState(false);
   const [showSidebarMobile, setShowSidebarMobile] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkIsMobile = () => {
+      setIsMobile(window.innerWidth < 1024);
+    };
+    checkIsMobile();
+    window.addEventListener('resize', checkIsMobile);
+    return () => window.removeEventListener('resize', checkIsMobile);
+  }, []);
+
   const [showShareMenu, setShowShareMenu] = useState(false);
   const [copied, setCopied] = useState(false);
 
@@ -2656,41 +2667,30 @@ export default function AdventureMap() {
   }, [selectedCategory, searchQuery, autoDiscoveredPoints]);
 
   return (
-    <div className="h-auto lg:h-[calc(100vh-96px)] bg-[#0b0c0d] flex flex-col lg:flex-row overflow-hidden isolate relative no-scrollbar">
+    <div className="h-auto lg:h-[calc(100vh-96px)] bg-[#0b0c0d] flex flex-col lg:flex-row overflow-y-auto lg:overflow-hidden isolate relative no-scrollbar scroll-smooth">
       <SEO title="Tactical GPS Explorer — Atlas do Aventureiro" description="Sistema de navegação tática para expedições independentes." />
       
-      {/* Mobile Sidebar Overlay */}
-      <AnimatePresence>
-        {showSidebarMobile && (
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => setShowSidebarMobile(false)}
-            className="lg:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-[4500]"
-          />
-        )}
-      </AnimatePresence>
-
       {/* --- TACTICAL SIDEBAR (CONSOLIDATED) --- */}
-      <aside ref={sidebarRef} className={cn(
-         "w-full lg:w-[420px] lg:h-full flex-shrink-0 flex flex-col bg-[#0b0c0d]/98 backdrop-blur-3xl lg:backdrop-blur-none z-[5000] border-t lg:border-t-0 lg:border-r border-white/10 overflow-hidden transition-all duration-300 shadow-[0_-15px_50px_rgba(0,0,0,0.9)] lg:shadow-[20px_0_60px_rgba(0,0,0,0.8)]",
-         "fixed inset-x-0 bottom-0 h-[75vh] rounded-t-2xl lg:rounded-none lg:static lg:h-full lg:order-first",
-         !showSidebarMobile && "hidden lg:flex",
-         showSidebarMobile && "flex animate-in slide-in-from-bottom duration-300"
-      )}>
-         {/* Drag Handle Mobile */}
-         <div className="lg:hidden w-12 h-1 bg-white/20 rounded-full mx-auto my-3 shrink-0" />
-         {/* Close Button Mobile */}
-         <button 
-           onClick={() => setShowSidebarMobile(false)}
-           className="lg:hidden absolute top-6 right-6 z-[60] p-2 bg-white/5 border border-white/10 text-white/40 hover:text-white rounded-sm"
+      <motion.aside 
+        ref={sidebarRef as any}
+        className={cn(
+          "w-full lg:w-[420px] flex-shrink-0 flex flex-col bg-[#0b0c0d]/98 backdrop-blur-3xl lg:backdrop-blur-none border-t lg:border-t-0 lg:border-r border-white/10 overflow-hidden shadow-[0_-15px_50px_rgba(0,0,0,0.9)] lg:shadow-[20px_0_60px_rgba(0,0,0,0.8)]",
+          "relative lg:static lg:order-first order-last h-[85vh] lg:h-full z-[1000] lg:z-[5000]"
+        )}
+      >
+         {/* Decorative Drag Handle Mobile */}
+         <div 
+           className="lg:hidden w-full flex flex-col items-center pt-4 pb-3 cursor-pointer select-none shrink-0"
+           onClick={() => {
+             sidebarRef.current?.scrollIntoView({ behavior: 'smooth' });
+           }}
          >
-            <X size={20} />
-         </button>
+           <div className="w-16 h-1.5 bg-[#ff641d]/40 rounded-full hover:bg-[#ff641d]/60 transition-colors" />
+           <span className="text-[6px] font-mono text-[#ff641d]/50 tracking-[0.3em] uppercase mt-2">SISTEMA_TÁTICO_GPS</span>
+         </div>
 
          {/* Brand Section */}
-         <div className="p-6 border-b border-white/5 flex flex-col gap-1 bg-gradient-to-br from-black to-[#ff641d]/10">
+         <div className="p-6 border-b border-white/5 flex flex-col gap-1 bg-gradient-to-br from-black to-[#ff641d]/10 shrink-0 select-none">
             <div className="text-[8px] font-mono text-[#ff641d] uppercase tracking-[0.4em] font-black">SYSTEM_OS // v2.6.9</div>
             <h1 className="text-xl font-display font-black text-white uppercase tracking-tighter leading-none flex items-center gap-3">
                <Navigation2 size={24} className={isExpeditionMode ? "animate-pulse text-[#ff641d]" : "text-white/40"} />
@@ -3431,7 +3431,7 @@ export default function AdventureMap() {
             </div>
             <div className="text-[8px] font-mono text-white/10 uppercase tracking-widest">EXPLORER_TAC_V2</div>
          </div>
-      </aside>
+      </motion.aside>
 
       {/* --- MAP MAIN VIEWPORT --- */}
       <div className="w-full h-[75vh] lg:h-full relative flex flex-col lg:flex-1 bg-[#0b0c0d] border-l lg:border-l border-white/5 isolate order-first lg:order-last overflow-hidden lg:overflow-visible">
@@ -3652,14 +3652,14 @@ export default function AdventureMap() {
                    {/* TACTICAL MENU ACTION */}
                    <button 
                      onClick={() => {
-                       setShowSidebarMobile(true);
+
                        setTimeout(() => {
                          sidebarRef.current?.scrollIntoView({ behavior: 'smooth' });
                        }, 100);
                      }}
                      className={cn(
                        "h-8 px-3 bg-white/[0.02] border rounded-xs transition-all flex items-center gap-1.5 shrink-0 text-[8px] font-mono font-black uppercase tracking-widest",
-                       showSidebarMobile ? "border-[#ff641d] text-[#ff641d] bg-[#ff641d]/10 animate-pulse" : "border-[#ff641d]/30 text-[#ff641d]"
+                       "border-[#ff641d]/30 text-[#ff641d]"
                      )}
                    >
                      <Menu size={11} />
@@ -4031,11 +4031,10 @@ export default function AdventureMap() {
 
              {/* Mobile 3-Dots Sidebar Trigger */}
              <button
-               onClick={() => setShowSidebarMobile(!showSidebarMobile)}
-               className={cn(
-                 "lg:hidden h-12 w-12 rounded-xs border flex items-center justify-center transition-all bg-[#0a0a0b]/80 border-[#ff7828]/15 text-[#ff641d] active:scale-95 shrink-0 shadow-lg",
-                 showSidebarMobile && "bg-[#ff641d]/10 border-[#ff641d] text-[#ff641d] animate-pulse"
-               )}
+               onClick={() => {
+                 sidebarRef.current?.scrollIntoView({ behavior: 'smooth' });
+               }}
+               className="lg:hidden h-12 w-12 rounded-xs border flex items-center justify-center transition-all bg-[#0a0a0b]/80 border-[#ff7828]/15 text-[#ff641d] active:scale-95 shrink-0 shadow-lg"
                title="SISTEMA OPERACIONAL (TÁTICO)"
              >
                <MoreVertical size={16} />
@@ -4178,11 +4177,10 @@ export default function AdventureMap() {
 
              {/* 3-dots button to open GPS_TACTICAL_SYSTEM sidebar */}
              <button
-               onClick={() => setShowSidebarMobile(!showSidebarMobile)}
-               className={cn(
-                 "h-10 w-10 rounded-xs border flex items-center justify-center transition-all bg-white/[0.03] border-[#ff7828]/10 text-white/40 hover:text-white hover:border-[#ff641d]/30 shrink-0",
-                 showSidebarMobile && "bg-[#ff641d]/10 border-[#ff641d] text-[#ff641d]"
-               )}
+               onClick={() => {
+                 sidebarRef.current?.scrollIntoView({ behavior: 'smooth' });
+               }}
+               className="h-10 w-10 rounded-xs border flex items-center justify-center transition-all bg-white/[0.03] border-[#ff7828]/10 text-[#ff641d] hover:text-white hover:border-[#ff641d]/30 shrink-0 bg-[#ff641d]/5"
                title="SISTEMA OPERACIONAL (TÁTICO)"
              >
                <MoreVertical size={16} />
@@ -4357,12 +4355,9 @@ export default function AdventureMap() {
          {/* Tactical Mobile Menu Trigger */}
          <button 
            onClick={() => {
-             setShowSidebarMobile(true);
-             setTimeout(() => {
-               sidebarRef.current?.scrollIntoView({ behavior: 'smooth' });
-             }, 100);
+             sidebarRef.current?.scrollIntoView({ behavior: 'smooth' });
            }}
-           className="lg:hidden w-9 h-9 bg-black/80 border border-[#ff641d]/50 text-[#ff641d] rounded-sm transition-all shadow-xl flex items-center justify-center animate-pulse"
+           className="lg:hidden w-9 h-9 bg-black/80 border border-[#ff641d]/50 text-[#ff641d] rounded-sm transition-all shadow-xl flex items-center justify-center"
            title="MENU TÁTICO"
          >
             <Menu size={16} />
