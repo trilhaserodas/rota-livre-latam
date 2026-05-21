@@ -3477,7 +3477,12 @@ export default function AdventureMap() {
               
               <TileLayer
                 attribution='&copy; CARTO'
-                url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+                url="https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png"
+              />
+              <TileLayer
+                url="https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png"
+                className="map-contrast-labels-layer"
+                zIndex={10}
               />
 
               {/* Active Route Display: Optimized to only show start/end and line */}
